@@ -4,6 +4,7 @@ import { generateUUID } from '../utils/id';
 import { calculateLineTotal } from '../utils/money';
 import { CompleteSaleResult } from '../services/saleService';
 import { db } from '../db';
+import { deviceService } from '../services/deviceService';
 
 export interface PosState {
   currentUser: User | null;
@@ -83,8 +84,9 @@ class PosStore {
 
   public async initSession() {
     try {
-      const register = await db.registers.get('reg-001-main');
-      const device = await db.devices.get('dev-pos-terminal-01');
+      const status = await deviceService.getDeviceStatus();
+      const register = status.register || (await db.registers.where('is_active').equals(1).first()) || null;
+      const device = status.device;
 
       // Check if there is an active open shift
       const activeShift = await db.shifts.where('status').equals('open').first();
@@ -289,6 +291,8 @@ export function usePos() {
     selectCustomer: (cust: Customer | null) => posStore.selectCustomer(cust),
     setCurrentUser: (user: User | null) => posStore.setState({ currentUser: user }),
     setActiveShift: (shift: Shift | null) => posStore.setState({ activeShift: shift }),
+    setActiveRegister: (register: Register | null) => posStore.setState({ activeRegister: register }),
+    setActiveDevice: (device: Device | null) => posStore.setState({ activeDevice: device }),
     setActiveWorkflowStep: (step: number) => posStore.setState({ activeWorkflowStep: step }),
     setActiveView: (view: PosState['activeView']) => posStore.setState({ activeView: view }),
     setOpeningShiftOpen: (open: boolean) => posStore.setState({ isOpeningShiftOpen: open }),
