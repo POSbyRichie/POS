@@ -3,6 +3,7 @@ import { CheckCircle2, ArrowRight, Printer, CheckCircle, CloudOff, X } from 'luc
 import { usePos } from '../../store/posStore';
 import { formatMoney } from '../../utils/money';
 import { printService } from '../../services/printService';
+import { LoyaltyLedgerCard } from '../loyalty/LoyaltyLedgerCard';
 
 interface SaleSuccessModalProps {
   onClose: () => void;
@@ -121,6 +122,13 @@ export const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({ onClose, onN
                 </span>
               </div>
             </div>
+
+            {/* Audit Trailed Loyalty Transaction Card */}
+            {lastCompletedSaleResult.loyaltyTransaction && (
+              <div className="pt-1">
+                <LoyaltyLedgerCard transaction={lastCompletedSaleResult.loyaltyTransaction} />
+              </div>
+            )}
           </div>
 
           <div className="flex gap-2">

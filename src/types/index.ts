@@ -18,12 +18,13 @@ export interface User {
   id: string; // UUID
   username: string;
   full_name: string;
+  name?: string;
   role: UserRole;
   pin_hash: string; // Salted PBKDF2/SHA-256 hash for offline auth
   salt: string;
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Device {
@@ -120,7 +121,24 @@ export interface Shift {
   card_sales_total: number;
   wallet_sales_total: number;
   qr_sales_total: number;
+  cash_in_total?: number;
+  cash_out_total?: number;
   notes?: string;
+  sync_status: SyncStatus;
+}
+
+export type CashMovementType = 'PAY_IN' | 'PAY_OUT' | 'SAFE_DROP' | 'DRAWER_COUNT_ADJUST';
+
+export interface CashMovement {
+  id: string; // UUID
+  idempotency_key: string;
+  shift_id: string;
+  register_id: string;
+  cashier_id: string;
+  type: CashMovementType;
+  amount: number; // in minor units UGX
+  reason: string;
+  timestamp: string;
   sync_status: SyncStatus;
 }
 
@@ -132,6 +150,7 @@ export interface Customer {
   address?: string;
   loyalty_number?: string;
   loyalty_points: number;
+  total_spent?: number;
   sync_status: SyncStatus;
   created_at: string;
   updated_at: string;
@@ -141,7 +160,10 @@ export interface LoyaltyTransaction {
   id: string; // UUID
   idempotency_key: string;
   customer_id: string;
-  sale_id: string;
+  sale_id?: string;
+  receipt_number?: string;
+  reason?: string;
+  cashier_id?: string;
   points_delta: number;
   previous_points: number;
   new_points: number;
@@ -281,7 +303,7 @@ export interface ReceiptNumberOptions {
 
 export interface SyncQueueItem {
   id?: number;
-  entity_type: 'sale' | 'shift' | 'inventory_movement' | 'customer' | 'loyalty_transaction' | 'receipt' | 'product' | 'category';
+  entity_type: 'sale' | 'shift' | 'inventory_movement' | 'customer' | 'loyalty_transaction' | 'receipt' | 'product' | 'category' | 'cash_movement';
   entity_id: string;
   operation: 'INSERT' | 'UPDATE' | 'DELETE';
   payload: string; // JSON

@@ -12,6 +12,7 @@ import {
   Inventory,
   InventoryMovement,
   Shift,
+  CashMovement,
   Sale,
   SaleItem,
   PaymentRecord,
@@ -43,6 +44,7 @@ export class PosDatabase extends Dexie {
   inventory!: Table<Inventory, string>;
   inventoryMovements!: Table<InventoryMovement, string>;
   shifts!: Table<Shift, string>;
+  cashMovements!: Table<CashMovement, string>;
   sales!: Table<Sale, string>;
   saleItems!: Table<SaleItem, string>;
   payments!: Table<PaymentRecord, string>;

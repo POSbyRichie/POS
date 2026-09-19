@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Lock, AlertTriangle, LogOut } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Lock, AlertTriangle, LogOut, ArrowDownLeft, ArrowUpRight, ShieldAlert } from 'lucide-react';
 import { usePos } from '../../store/posStore';
-import { db } from '../../db';
+import { shiftService } from '../../services/shiftService';
+import { CashMovement } from '../../types';
 import { parseToMinorUnits, formatMoney } from '../../utils/money';
 
 interface CloseShiftModalProps {
@@ -10,20 +11,33 @@ interface CloseShiftModalProps {
 
 export const CloseShiftModal: React.FC<CloseShiftModalProps> = ({ onClose }) => {
   const { activeShift, currentUser, setActiveShift, setActiveWorkflowStep, logout } = usePos();
+  const [cashMovements, setCashMovements] = useState<CashMovement[]>([]);
   const [actualCashStr, setActualCashStr] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
-  React.useEffect(() => {
+  useEffect(() => {
     setActiveWorkflowStep(18);
-  }, [setActiveWorkflowStep]);
+    if (activeShift) {
+      shiftService.getCashMovements(activeShift.id).then(setCashMovements).catch(() => {});
+    }
+  }, [activeShift, setActiveWorkflowStep]);
 
   if (!activeShift) return null;
 
   const openingFloat = activeShift.opening_float || 0;
   const cashSales = activeShift.cash_sales_total || 0;
-  const expectedCash = openingFloat + cashSales;
+
+  const cashIn = cashMovements
+    .filter(m => m.type === 'PAY_IN')
+    .reduce((sum, m) => sum + m.amount, 0);
+
+  const cashOut = cashMovements
+    .filter(m => m.type === 'PAY_OUT' || m.type === 'SAFE_DROP')
+    .reduce((sum, m) => sum + m.amount, 0);
+
+  const expectedCash = openingFloat + cashSales + cashIn - cashOut;
   const actualCash = parseToMinorUnits(actualCashStr, 0);
   const variance = actualCash - expectedCash;
 
@@ -38,41 +52,11 @@ export const CloseShiftModal: React.FC<CloseShiftModalProps> = ({ onClose }) => 
     setError('');
 
     try {
-      const now = new Date().toISOString();
-
-      await db.shifts.update(activeShift.id, {
-        status: 'closed',
-        closed_at: now,
-        closing_cash_actual: actualCash,
-        closing_cash_expected: expectedCash,
-        variance,
+      await shiftService.closeShift({
+        shiftId: activeShift.id,
+        cashierId: currentUser?.id || 'cashier',
+        closingCashActual: actualCash,
         notes: notes.trim() || undefined,
-        sync_status: 'pending',
-      });
-
-      // Update sync queue
-      const updatedShift = await db.shifts.get(activeShift.id);
-      await db.syncQueue.add({
-        entity_type: 'shift',
-        entity_id: activeShift.id,
-        operation: 'UPDATE',
-        payload: JSON.stringify(updatedShift),
-        idempotency_key: `shift-close-${activeShift.id}`,
-        attempts: 0,
-        max_attempts: 10,
-        status: 'pending',
-        created_at: now,
-      });
-
-      // Audit log
-      await db.auditLogs.add({
-        user_id: currentUser?.id || 'unknown',
-        action: 'CLOSE_SHIFT',
-        entity_type: 'shift',
-        entity_id: activeShift.id,
-        details: `Expected: ${expectedCash}, Actual: ${actualCash}, Variance: ${variance}`,
-        timestamp: now,
-        sync_status: 'pending',
       });
 
       setActiveShift(null);
@@ -87,21 +71,21 @@ export const CloseShiftModal: React.FC<CloseShiftModalProps> = ({ onClose }) => 
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
-        <div className="bg-gradient-to-r from-rose-950/70 to-slate-900 p-6 border-b border-slate-800 flex justify-between items-center">
+      <div className="bg-slate-900 border border-slate-800 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150 max-h-[90vh] flex flex-col">
+        <div className="bg-gradient-to-r from-rose-950/70 to-slate-900 p-5 border-b border-slate-800 flex justify-between items-center shrink-0">
           <div>
             <div className="flex items-center gap-2 text-rose-400 font-bold text-lg mb-0.5">
               <Lock className="w-5 h-5" />
               <span>18. CLOSE SHIFT &amp; RECONCILIATION</span>
             </div>
-            <p className="text-xs text-slate-400">Perform physical drawer count and verify variance</p>
+            <p className="text-xs text-slate-400">Reconcile drawer with sales and cash movements</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white text-sm font-bold">
             &times;
           </button>
         </div>
 
-        <form onSubmit={handleCloseShift} className="p-6 space-y-4">
+        <form onSubmit={handleCloseShift} className="p-6 space-y-4 overflow-y-auto">
           {error && (
             <div className="flex items-center gap-2 p-3 bg-rose-950/80 border border-rose-800 text-rose-300 text-xs rounded-xl">
               <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -109,55 +93,72 @@ export const CloseShiftModal: React.FC<CloseShiftModalProps> = ({ onClose }) => 
             </div>
           )}
 
-          {/* Shift Financial Summary */}
-          <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-2">
-            <div className="flex justify-between text-xs text-slate-400">
-              <span>Shift Opened:</span>
-              <span className="font-mono text-slate-200">{new Date(activeShift.opened_at).toLocaleTimeString()}</span>
+          {/* Mathematical Reconciliation Formula */}
+          <div className="bg-slate-950/90 p-4 rounded-xl border border-slate-800 space-y-2.5">
+            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+              Drawer Cash Formula
             </div>
-            <div className="flex justify-between text-xs text-slate-400">
-              <span>Opening Float:</span>
-              <span className="font-mono text-slate-200">{formatMoney(openingFloat)}</span>
-            </div>
-            <div className="flex justify-between text-xs text-slate-400">
-              <span>Total Transactions:</span>
-              <span className="font-mono text-slate-200">{activeShift.transaction_count || 0} completed</span>
-            </div>
-            <div className="flex justify-between text-xs text-slate-400">
-              <span>Gross Sales (All Methods):</span>
-              <span className="font-mono text-slate-200">{formatMoney(activeShift.total_sales || 0)}</span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                <span className="text-slate-400 block text-[10px] uppercase">Opening Float</span>
+                <span className="font-mono font-bold text-white">{formatMoney(openingFloat)}</span>
+              </div>
+              <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                <span className="text-slate-400 block text-[10px] uppercase">(+) Cash Sales</span>
+                <span className="font-mono font-bold text-emerald-400">{formatMoney(cashSales)}</span>
+              </div>
+              <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                <span className="text-slate-400 block text-[10px] uppercase">(+) Pay Ins</span>
+                <span className="font-mono font-bold text-sky-400">{formatMoney(cashIn)}</span>
+              </div>
+              <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                <span className="text-slate-400 block text-[10px] uppercase">(-) Pay Outs/Drops</span>
+                <span className="font-mono font-bold text-rose-400">{formatMoney(cashOut)}</span>
+              </div>
             </div>
 
-            <div className="pt-2 border-t border-slate-800 grid grid-cols-3 gap-2 text-[11px] text-center">
-              <div className="bg-slate-900/80 p-2 rounded-lg">
-                <span className="text-slate-400 block">Cash Sales</span>
-                <span className="font-bold text-emerald-400">{formatMoney(cashSales)}</span>
+            {/* Expected Cash Banner */}
+            <div className="p-3 bg-sky-950/50 border border-sky-800/80 rounded-xl flex items-center justify-between mt-2">
+              <div>
+                <span className="text-xs text-sky-300 font-bold block">Expected Drawer Cash</span>
+                <span className="text-[10px] text-slate-400">Float + Cash Sales + Pay Ins - Cash Outs</span>
               </div>
-              <div className="bg-slate-900/80 p-2 rounded-lg">
-                <span className="text-slate-400 block">Card Sales</span>
-                <span className="font-bold text-sky-400">{formatMoney(activeShift.card_sales_total || 0)}</span>
-              </div>
-              <div className="bg-slate-900/80 p-2 rounded-lg">
-                <span className="text-slate-400 block">Wallet/QR</span>
-                <span className="font-bold text-purple-400">
-                  {formatMoney((activeShift.wallet_sales_total || 0) + (activeShift.qr_sales_total || 0))}
-                </span>
-              </div>
+              <span className="text-xl font-bold text-sky-200 font-mono">{formatMoney(expectedCash)}</span>
             </div>
           </div>
 
-          {/* Expected Cash Banner */}
-          <div className="p-3 bg-sky-950/40 border border-sky-800/60 rounded-xl flex items-center justify-between">
-            <div>
-              <span className="text-xs text-sky-300 font-medium block">Expected Drawer Cash</span>
-              <span className="text-[10px] text-slate-400">Opening Float + Cash Sales</span>
+          {/* Cash Movements Itemized List */}
+          {cashMovements.length > 0 && (
+            <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                <span>Shift Cash Movements ({cashMovements.length})</span>
+                <span className="text-[10px] text-slate-500">Audit Trail</span>
+              </div>
+              <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                {cashMovements.map(m => (
+                  <div key={m.id} className="flex items-center justify-between text-xs p-2 bg-slate-900/70 rounded-lg border border-slate-800/60">
+                    <div className="flex items-center gap-1.5">
+                      {m.type === 'PAY_IN' ? (
+                        <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-400" />
+                      ) : m.type === 'SAFE_DROP' ? (
+                        <ShieldAlert className="w-3.5 h-3.5 text-purple-400" />
+                      ) : (
+                        <ArrowUpRight className="w-3.5 h-3.5 text-rose-400" />
+                      )}
+                      <span className="font-semibold text-slate-300">{m.reason}</span>
+                    </div>
+                    <span className={`font-mono font-bold ${m.type === 'PAY_IN' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {m.type === 'PAY_IN' ? '+' : '-'}{formatMoney(m.amount)}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <span className="text-lg font-bold text-sky-200 font-mono">{formatMoney(expectedCash)}</span>
-          </div>
+          )}
 
-          {/* Cash Count Input */}
+          {/* Actual Cash Input */}
           <div>
-            <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-1.5">
               Physical Cash Counted in Drawer (UGX) *
             </label>
             <div className="relative">

@@ -8,12 +8,14 @@ import {
   TrendingUp,
   Package,
   PlusCircle,
+  Banknote,
 } from 'lucide-react';
 import { usePos } from '../../store/posStore';
 import { db } from '../../db';
 import { Product } from '../../types';
 import { formatMoney } from '../../utils/money';
 import { OfflineIndicator } from './OfflineIndicator';
+import { CashMovementModal } from '../shift/CashMovementModal';
 
 interface DashboardProps {
   onOpenSyncModal: () => void;
@@ -34,6 +36,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenSyncModal }) => {
   const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
   const [todaySalesCount, setTodaySalesCount] = useState<number>(0);
   const [todaySalesAmount, setTodaySalesAmount] = useState<number>(0);
+  const [isCashMovementOpen, setIsCashMovementOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date().toLocaleTimeString()), 1000);
@@ -237,15 +240,34 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenSyncModal }) => {
               {cartItems.length > 0 ? 'RESUME ACTIVE CART' : 'GO TO PRODUCT SCANNER'}
             </button>
 
-            <button
-              onClick={() => setClosingShiftOpen(true)}
-              className="w-full py-2.5 bg-slate-800 hover:bg-rose-950/80 hover:text-rose-300 text-slate-300 font-semibold rounded-xl text-xs transition border border-slate-700"
-            >
-              Close Shift (Step 18)
-            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setIsCashMovementOpen(true)}
+                className="py-2.5 bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 font-bold rounded-xl text-xs transition border border-slate-700 flex items-center justify-center gap-1.5"
+              >
+                <Banknote className="w-3.5 h-3.5" />
+                <span>Cash Movement</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setClosingShiftOpen(true)}
+                className="py-2.5 bg-slate-800 hover:bg-rose-950/80 hover:text-rose-300 text-slate-300 font-semibold rounded-xl text-xs transition border border-slate-700"
+              >
+                Close Shift (Step 18)
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      {isCashMovementOpen && (
+        <CashMovementModal
+          onClose={() => setIsCashMovementOpen(false)}
+          onSuccess={() => loadDashboardMetrics()}
+        />
+      )}
     </div>
   );
 };
