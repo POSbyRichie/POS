@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PlayCircle, DollarSign, Terminal, Calendar, AlertTriangle, CheckCircle } from 'lucide-react';
+import { PlayCircle, Terminal, Calendar, AlertTriangle, CheckCircle } from 'lucide-react';
 import { usePos } from '../../store/posStore';
 import { db } from '../../db';
 import { Shift } from '../../types';

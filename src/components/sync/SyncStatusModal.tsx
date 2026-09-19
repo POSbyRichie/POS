@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Cloud, CloudOff, RefreshCw, AlertTriangle, CheckCircle, Clock, Trash2, X, History } from 'lucide-react';
+import { Cloud, RefreshCw, AlertTriangle, Clock, X, History } from 'lucide-react';
 import { db } from '../../db';
 import { SyncQueueItem, SyncError, AuditLog } from '../../types';
 import { syncService } from '../../services/syncService';

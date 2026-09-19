@@ -3,11 +3,8 @@ import {
   Printer,
   Mail,
   MessageSquare,
-  Download,
   CheckCircle,
   X,
-  FileText,
-  Clock,
   ArrowRight,
 } from 'lucide-react';
 import { usePos } from '../../store/posStore';
@@ -28,7 +25,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ onClose, onProceedTo
 
   if (!lastCompletedSaleResult) return null;
 
-  const { sale, items, payments, receipt, loyaltyTransaction, newCustomerPoints } = lastCompletedSaleResult;
+  const { sale, items, payments, loyaltyTransaction, newCustomerPoints } = lastCompletedSaleResult;
 
   const handlePrint = () => {
     printService.printReceipt();
@@ -52,9 +49,18 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ onClose, onProceedTo
         {/* Left Column: Actions (Print, Email, SMS, Next) */}
         <div className="w-full md:w-5/12 p-6 border-b md:border-b-0 md:border-r border-slate-800 flex flex-col justify-between space-y-4">
           <div>
-            <div className="flex items-center gap-2 text-sky-400 font-bold text-sm mb-1">
-              <Printer className="w-5 h-5 text-sky-400" />
-              <span>12. RECEIPT OPTIONS</span>
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2 text-sky-400 font-bold text-sm">
+                <Printer className="w-5 h-5 text-sky-400" />
+                <span>12. RECEIPT OPTIONS</span>
+              </div>
+              <button
+                onClick={onClose}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+                title="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
             <p className="text-xs text-slate-400 mb-4">Print, queue digital receipt, or continue to sale completion</p>
 

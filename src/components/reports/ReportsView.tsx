@@ -1,26 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
   BarChart3,
-  Calendar,
-  DollarSign,
-  TrendingUp,
-  User,
-  CreditCard,
-  Package,
-  Award,
   CloudOff,
-  Percent,
 } from 'lucide-react';
 import { db } from '../../db';
-import { Sale, SaleItem, Shift, Product, Customer } from '../../types';
+import { Sale, SaleItem, Shift } from '../../types';
 import { formatMoney } from '../../utils/money';
 
 export const ReportsView: React.FC = () => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
   const [activeReportTab, setActiveReportTab] = useState<
     'sales' | 'payment_methods' | 'cashier' | 'products' | 'shifts' | 'offline_sync'
   >('sales');
@@ -30,19 +20,15 @@ export const ReportsView: React.FC = () => {
   }, []);
 
   const loadReportData = async () => {
-    const [allSales, allItems, allShifts, allProds, allCusts] = await Promise.all([
+    const [allSales, allItems, allShifts] = await Promise.all([
       db.sales.toArray(),
       db.saleItems.toArray(),
       db.shifts.toArray(),
-      db.products.toArray(),
-      db.customers.toArray(),
     ]);
 
     setSales(allSales);
     setSaleItems(allItems);
     setShifts(allShifts);
-    setProducts(allProds);
-    setCustomers(allCusts);
   };
 
   // Metrics computation

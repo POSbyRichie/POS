@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Wifi, WifiOff, RefreshCw, AlertTriangle, CloudOff, CheckCircle } from 'lucide-react';
 import { connectivityService } from '../../services/connectivity';
 import { syncService, SyncStats } from '../../services/syncService';

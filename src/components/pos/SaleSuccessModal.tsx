@@ -1,9 +1,8 @@
 import React from 'react';
-import { CheckCircle2, ShoppingBag, ArrowRight, Printer, CheckCircle, CloudOff, RefreshCw } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Printer, CheckCircle, CloudOff, X } from 'lucide-react';
 import { usePos } from '../../store/posStore';
 import { formatMoney } from '../../utils/money';
 import { printService } from '../../services/printService';
-import { connectivityService } from '../../services/connectivity';
 
 interface SaleSuccessModalProps {
   onClose: () => void;
@@ -12,7 +11,6 @@ interface SaleSuccessModalProps {
 
 export const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({ onClose, onNextCustomer }) => {
   const { lastCompletedSaleResult } = usePos();
-  const isOnline = connectivityService.isOnline();
 
   if (!lastCompletedSaleResult) return null;
 
@@ -22,7 +20,14 @@ export const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({ onClose, onN
     <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
       <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
         {/* Header */}
-        <div className="p-6 bg-gradient-to-b from-emerald-950/90 to-slate-900 border-b border-slate-800 text-center">
+        <div className="relative p-6 bg-gradient-to-b from-emerald-950/90 to-slate-900 border-b border-slate-800 text-center">
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+            title="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
           <div className="w-16 h-16 bg-emerald-500 text-slate-950 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-500/30">
             <CheckCircle2 className="w-10 h-10" />
           </div>

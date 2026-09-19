@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Lock, AlertTriangle, CheckCircle, Calculator, FileText, LogOut, DollarSign } from 'lucide-react';
+import { Lock, AlertTriangle, LogOut } from 'lucide-react';
 import { usePos } from '../../store/posStore';
 import { db } from '../../db';
-import { Shift } from '../../types';
 import { parseToMinorUnits, formatMoney } from '../../utils/money';
 
 interface CloseShiftModalProps {
@@ -10,7 +9,7 @@ interface CloseShiftModalProps {
 }
 
 export const CloseShiftModal: React.FC<CloseShiftModalProps> = ({ onClose }) => {
-  const { activeShift, activeRegister, currentUser, setActiveShift, logout } = usePos();
+  const { activeShift, currentUser, setActiveShift, logout } = usePos();
   const [actualCashStr, setActualCashStr] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);

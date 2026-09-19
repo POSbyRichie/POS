@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User as UserIcon, Lock, KeyRound, Shield, AlertCircle } from 'lucide-react';
+import { Lock, KeyRound, Shield, AlertCircle } from 'lucide-react';
 import { db } from '../../db';
 import { User, Device } from '../../types';
 import { verifyPin } from '../../utils/id';
@@ -84,7 +84,7 @@ export const LoginModal: React.FC = () => {
         setActiveWorkflowStep(2);
         setOpeningShiftOpen(true);
       }
-    } catch (err) {
+    } catch {
       setError('Authentication failed. Please verify offline authorization.');
     } finally {
       setIsVerifying(false);

@@ -7,15 +7,9 @@ import {
   FileText,
   User,
   CreditCard,
-  Percent,
-  DollarSign,
-  AlertCircle,
-  X,
-  Sparkles,
 } from 'lucide-react';
 import { usePos } from '../../store/posStore';
 import { calculateCartTotals, formatMoney } from '../../utils/money';
-import { CartItem } from '../../types';
 
 interface CartReviewProps {
   onProceedToPayment: () => void;
@@ -40,7 +34,6 @@ export const CartReview: React.FC<CartReviewProps> = ({
   } = usePos();
 
   const [editingNoteIndex, setEditingNoteIndex] = useState<number | null>(null);
-  const [editingDiscountIndex, setEditingDiscountIndex] = useState<number | null>(null);
   const [discountPercentInput, setDiscountPercentInput] = useState<string>('');
   const [isCartDiscountOpen, setIsCartDiscountOpen] = useState<boolean>(false);
 

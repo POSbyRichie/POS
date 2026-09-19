@@ -4,12 +4,9 @@ import {
   Barcode,
   Package,
   Plus,
-  AlertCircle,
-  Tag,
   CheckCircle,
   ArrowRight,
   Filter,
-  Layers,
 } from 'lucide-react';
 import { db } from '../../db';
 import { Product, Category } from '../../types';
@@ -34,7 +31,6 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ onProceedToRevie
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [lastScannedBarcode, setLastScannedBarcode] = useState<string>('');
   const [recentlyAddedProduct, setRecentlyAddedProduct] = useState<Product | null>(null);
   const [showMoreProductsPrompt, setShowMoreProductsPrompt] = useState<boolean>(false);
 
@@ -66,8 +62,6 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ onProceedToRevie
    * Authoritative Step 5 & 6 & 7: Scan Product -> Check Stock -> Add to Cart
    */
   const handleBarcodeScanned = async (barcode: string) => {
-    setLastScannedBarcode(barcode);
-
     // Search by exact barcode or SKU first
     const matchedProduct = await db.products
       .where('barcode')

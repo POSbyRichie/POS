@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Search, PlusCircle, Award, Check, X, Phone, Mail } from 'lucide-react';
+import { User, Search, PlusCircle, Award, Check, X } from 'lucide-react';
 import { db } from '../../db';
 import { Customer } from '../../types';
 import { usePos } from '../../store/posStore';

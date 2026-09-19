@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   ShoppingCart,
-  DollarSign,
-  Receipt,
   AlertTriangle,
   Clock,
   User,
@@ -10,8 +8,6 @@ import {
   TrendingUp,
   Package,
   PlusCircle,
-  BarChart2,
-  RefreshCw,
 } from 'lucide-react';
 import { usePos } from '../../store/posStore';
 import { db } from '../../db';

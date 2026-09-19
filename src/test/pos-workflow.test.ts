@@ -3,9 +3,9 @@ import { db } from '../db';
 import { seedDatabase } from '../db/seed';
 import { inventoryService } from '../services/inventoryService';
 import { saleService } from '../services/saleService';
-import { calculateCartTotals, calculatePaymentBreakdown, formatMoney } from '../utils/money';
+import { calculateCartTotals } from '../utils/money';
 import { generateUUID } from '../utils/id';
-import { Shift, Product, Customer } from '../types';
+import { Shift } from '../types';
 
 describe('Authoritative POS Workflow Units', () => {
   beforeEach(async () => {

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Package, ArrowUpRight, ArrowDownRight, AlertTriangle, RefreshCw, Plus, History, Layers } from 'lucide-react';
+import { Package } from 'lucide-react';
 import { db } from '../../db';
 import { Product, InventoryMovement, InventoryMovementType } from '../../types';
 import { inventoryService } from '../../services/inventoryService';
 import { usePos } from '../../store/posStore';
-import { formatMoney, parseToMinorUnits } from '../../utils/money';
+import { formatMoney } from '../../utils/money';
 
 export const InventoryManager: React.FC = () => {
   const { currentUser, activeRegister } = usePos();

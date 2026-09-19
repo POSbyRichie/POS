@@ -113,7 +113,7 @@ class ConnectivityService {
         this.notify(this.status);
       }
       return true;
-    } catch (e) {
+    } catch {
       this.status = 'offline';
       this.notify(this.status);
       return false;
