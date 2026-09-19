@@ -92,4 +92,20 @@ export class InventoryRepository extends BaseRepository<InventoryMovement, strin
   async getMovementsByShift(shiftId: string): Promise<InventoryMovement[]> {
     return this.db.inventoryMovements.where('shift_id').equals(shiftId).toArray();
   }
+
+  async getRecentMovements(limit = 100): Promise<InventoryMovement[]> {
+    return this.db.inventoryMovements.reverse().limit(limit).toArray();
+  }
+
+  async getLowStockAlerts(): Promise<{ product: Product; deficit: number; isOutOfStock: boolean }[]> {
+    const lowStockProducts = await this.db.products
+      .filter(p => p.is_active !== false && p.stock_quantity <= p.min_stock_level)
+      .toArray();
+
+    return lowStockProducts.map(product => ({
+      product,
+      deficit: Math.max(0, product.min_stock_level - product.stock_quantity),
+      isOutOfStock: product.stock_quantity <= 0,
+    }));
+  }
 }

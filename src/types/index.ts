@@ -44,14 +44,29 @@ export interface Register {
 
 export interface Category {
   id: string; // UUID
+  store_id?: string;
   name: string;
   slug: string;
+  color?: string;
+  icon?: string;
+  sort_order?: number;
+  is_active?: boolean;
   sync_status: SyncStatus;
+  created_at?: string;
   updated_at: string;
+}
+
+export type StockFilterType = 'all' | 'in_stock' | 'low_stock' | 'out_of_stock';
+
+export interface ProductFilterOptions {
+  categoryId?: string;
+  stockFilter?: StockFilterType;
+  activeOnly?: boolean;
 }
 
 export interface Product {
   id: string; // UUID
+  store_id?: string;
   sku: string;
   barcode: string;
   name: string;
@@ -218,7 +233,7 @@ export interface Receipt {
 
 export interface SyncQueueItem {
   id?: number;
-  entity_type: 'sale' | 'shift' | 'inventory_movement' | 'customer' | 'loyalty_transaction' | 'receipt';
+  entity_type: 'sale' | 'shift' | 'inventory_movement' | 'customer' | 'loyalty_transaction' | 'receipt' | 'product' | 'category';
   entity_id: string;
   operation: 'INSERT' | 'UPDATE' | 'DELETE';
   payload: string; // JSON

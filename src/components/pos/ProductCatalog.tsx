@@ -8,7 +8,7 @@ import {
   ArrowRight,
   Filter,
 } from 'lucide-react';
-import { db } from '../../db';
+import { productRepository, categoryRepository } from '../../db';
 import { Product, Category } from '../../types';
 import { formatMoney } from '../../utils/money';
 import { usePos } from '../../store/posStore';
@@ -42,8 +42,8 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ onProceedToRevie
 
   const loadCatalog = async () => {
     const [allProducts, allCategories] = await Promise.all([
-      db.products.where('is_active').equals(1).toArray(),
-      db.categories.toArray(),
+      productRepository.getActiveProducts(),
+      categoryRepository.getAllActive(),
     ]);
     setProducts(allProducts);
     setCategories(allCategories);
@@ -63,12 +63,9 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ onProceedToRevie
    */
   const handleBarcodeScanned = async (barcode: string) => {
     // Search by exact barcode or SKU first
-    const matchedProduct = await db.products
-      .where('barcode')
-      .equals(barcode)
-      .or('sku')
-      .equals(barcode)
-      .first();
+    const matchedProduct =
+      (await productRepository.getByBarcode(barcode)) ||
+      (await productRepository.getBySku(barcode));
 
     if (!matchedProduct) {
       // Step 5 Decision: Product NOT Found

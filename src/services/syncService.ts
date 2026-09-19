@@ -1,3 +1,4 @@
+import { SupabaseClient } from '@supabase/supabase-js';
 import { syncEngine, SyncEngine, SyncStats } from '../sync';
 
 export type { SyncStats };
@@ -13,11 +14,15 @@ export class SyncService {
     this.engine = engine;
   }
 
-  public initSupabase() {
+  public initSupabase(): void {
     this.engine.initSupabase();
   }
 
-  public getSupabaseClient() {
+  public setSupabaseClient(client: SupabaseClient | null): void {
+    this.engine.setSupabaseClient(client);
+  }
+
+  public getSupabaseClient(): SupabaseClient | null {
     return this.engine.getSupabaseClient();
   }
 
@@ -37,7 +42,11 @@ export class SyncService {
     return this.engine.pullUpdatesFromSupabase();
   }
 
-  public destroy() {
+  public async syncCatalog(): Promise<{ pushed: number; errors: number; pulled: boolean }> {
+    return this.engine.syncCatalog();
+  }
+
+  public destroy(): void {
     this.engine.destroy();
   }
 }

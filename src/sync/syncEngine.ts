@@ -71,6 +71,10 @@ export class SyncEngine {
     }
   }
 
+  public setSupabaseClient(client: SupabaseClient | null): void {
+    this.supabase = client;
+  }
+
   public getSupabaseClient(): SupabaseClient | null {
     return this.supabase;
   }
@@ -235,6 +239,32 @@ export class SyncEngine {
         break;
       }
 
+      case 'product': {
+        const { sync_status: _sync_status, ...remoteProduct } = payload;
+        const { error } = await this.supabase
+          .from('products')
+          .upsert(remoteProduct, { onConflict: 'id' });
+        if (error) throw error;
+
+        await this.database.products.update(item.entity_id, {
+          sync_status: 'synced',
+        });
+        break;
+      }
+
+      case 'category': {
+        const { sync_status: _sync_status, ...remoteCategory } = payload;
+        const { error } = await this.supabase
+          .from('categories')
+          .upsert(remoteCategory, { onConflict: 'id' });
+        if (error) throw error;
+
+        await this.database.categories.update(item.entity_id, {
+          sync_status: 'synced',
+        });
+        break;
+      }
+
       case 'inventory_movement': {
         const { error } = await this.supabase
           .from('inventory_movements')
@@ -301,6 +331,10 @@ export class SyncEngine {
         sync_status: 'synced',
         server_synced_at: new Date().toISOString(),
       });
+    } else if (item.entity_type === 'product') {
+      await this.database.products.update(item.entity_id, { sync_status: 'synced' });
+    } else if (item.entity_type === 'category') {
+      await this.database.categories.update(item.entity_id, { sync_status: 'synced' });
     } else if (item.entity_type === 'inventory_movement') {
       await this.database.inventoryMovements.update(item.entity_id, { sync_status: 'synced' });
     } else if (item.entity_type === 'shift') {
@@ -316,6 +350,7 @@ export class SyncEngine {
 
   /**
    * Pull updated product catalog & categories down from Supabase to IndexedDB
+   * Reconciles stock levels with pending un-synced local inventory movements.
    */
   public async pullUpdatesFromSupabase(): Promise<boolean> {
     if (!this.supabase || !connectivityService.isOnline()) {
@@ -323,15 +358,7 @@ export class SyncEngine {
     }
 
     try {
-      const { data: products, error: prodError } = await this.supabase
-        .from('products')
-        .select('*')
-        .eq('is_active', true);
-
-      if (!prodError && products && products.length > 0) {
-        await this.database.products.bulkPut(products.map(p => ({ ...p, sync_status: 'synced' })));
-      }
-
+      // 1. Pull Categories
       const { data: categories, error: catError } = await this.supabase
         .from('categories')
         .select('*');
@@ -340,11 +367,58 @@ export class SyncEngine {
         await this.database.categories.bulkPut(categories.map(c => ({ ...c, sync_status: 'synced' })));
       }
 
+      // 2. Pull Products
+      const { data: products, error: prodError } = await this.supabase
+        .from('products')
+        .select('*')
+        .eq('is_active', true);
+
+      if (!prodError && products && products.length > 0) {
+        // Find any local pending inventory movements not yet pushed
+        const pendingMovements = await this.database.inventoryMovements
+          .where('sync_status')
+          .equals('pending')
+          .toArray();
+
+        const pendingDeltasByProduct = new Map<string, number>();
+        for (const mov of pendingMovements) {
+          const current = pendingDeltasByProduct.get(mov.product_id) || 0;
+          pendingDeltasByProduct.set(mov.product_id, current + mov.quantity_delta);
+        }
+
+        // Reconcile remote product stock with local pending deltas
+        const reconciledProducts = products.map(p => {
+          const localDelta = pendingDeltasByProduct.get(p.id) || 0;
+          return {
+            ...p,
+            stock_quantity: Math.max(0, (p.stock_quantity ?? 0) + localDelta),
+            sync_status: 'synced' as const,
+          };
+        });
+
+        await this.database.products.bulkPut(reconciledProducts);
+      }
+
       return true;
     } catch (err) {
       logger.warn('SyncEngine', 'Failed to pull updates from Supabase', err);
       return false;
     }
+  }
+
+  /**
+   * Performs a complete bidirectional synchronization:
+   * 1. Pushes all pending local changes (sales, products, categories, stock) to Supabase
+   * 2. Pulls updated catalog from Supabase into IndexedDB
+   */
+  public async syncCatalog(): Promise<{ pushed: number; errors: number; pulled: boolean }> {
+    const pushResult = await this.processQueue();
+    const pullSuccess = await this.pullUpdatesFromSupabase();
+    return {
+      pushed: pushResult.processed,
+      errors: pushResult.errors,
+      pulled: pullSuccess,
+    };
   }
 
   public destroy(): void {
