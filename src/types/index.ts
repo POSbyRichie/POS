@@ -223,12 +223,60 @@ export interface Receipt {
   receipt_number: string;
   content_json: string; // Serialized Sale details with items, cashier, store info
   printed_at?: string;
+  reprinted_at?: string;
+  reprint_count: number;
+  is_reprint?: boolean;
   email_queued: boolean;
   sms_queued: boolean;
   email_recipient?: string;
   sms_recipient?: string;
   sync_status: SyncStatus;
   created_at: string;
+}
+
+export type NotificationQueueStatus = 'queued' | 'processing' | 'sent' | 'failed';
+
+export interface EmailQueueItem {
+  id: string; // UUID
+  receipt_id: string;
+  sale_id: string;
+  receipt_number: string;
+  recipient_email: string;
+  customer_name?: string;
+  subject: string;
+  html_body: string;
+  status: NotificationQueueStatus;
+  attempts: number;
+  max_attempts: number;
+  last_attempt_at?: string;
+  sent_at?: string;
+  error_message?: string;
+  created_at: string;
+}
+
+export interface SmsQueueItem {
+  id: string; // UUID
+  receipt_id: string;
+  sale_id: string;
+  receipt_number: string;
+  phone_number: string;
+  customer_name?: string;
+  message_text: string;
+  status: NotificationQueueStatus;
+  attempts: number;
+  max_attempts: number;
+  last_attempt_at?: string;
+  sent_at?: string;
+  error_message?: string;
+  created_at: string;
+}
+
+export interface ReceiptNumberOptions {
+  registerId?: string;
+  registerCode?: string;
+  date?: Date;
+  prefix?: string;
+  format?: 'standard' | 'compact' | 'partitioned';
 }
 
 export interface SyncQueueItem {

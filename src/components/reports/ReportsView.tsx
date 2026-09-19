@@ -2,18 +2,26 @@ import React, { useState, useEffect } from 'react';
 import {
   BarChart3,
   CloudOff,
+  RotateCcw,
+  Printer,
 } from 'lucide-react';
 import { db } from '../../db';
-import { Sale, SaleItem, Shift } from '../../types';
+import { Sale, SaleItem, Shift, Receipt } from '../../types';
 import { formatMoney } from '../../utils/money';
+import { receiptService } from '../../services/receiptService';
+import { ReprintModal } from '../pos/ReprintModal';
+import { NotificationQueuesView } from './NotificationQueuesView';
 
 export const ReportsView: React.FC = () => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [activeReportTab, setActiveReportTab] = useState<
-    'sales' | 'payment_methods' | 'cashier' | 'products' | 'shifts' | 'offline_sync'
+    'sales' | 'payment_methods' | 'cashier' | 'products' | 'shifts' | 'offline_sync' | 'queues'
   >('sales');
+
+  const [isReprintModalOpen, setIsReprintModalOpen] = useState<boolean>(false);
+  const [selectedReceiptForReprint, setSelectedReceiptForReprint] = useState<Receipt | null>(null);
 
   useEffect(() => {
     loadReportData();
@@ -29,6 +37,21 @@ export const ReportsView: React.FC = () => {
     setSales(allSales);
     setSaleItems(allItems);
     setShifts(allShifts);
+  };
+
+  const handleOpenReprintForSale = async (sale: Sale) => {
+    try {
+      const receipt = await receiptService.getReceiptBySaleId(sale.id);
+      setSelectedReceiptForReprint(receipt);
+      setIsReprintModalOpen(true);
+    } catch (err) {
+      console.error('Error fetching receipt for reprint:', err);
+    }
+  };
+
+  const handleOpenGeneralReprintCenter = () => {
+    setSelectedReceiptForReprint(null);
+    setIsReprintModalOpen(true);
   };
 
   // Metrics computation
@@ -59,7 +82,7 @@ export const ReportsView: React.FC = () => {
     productSalesMap[item.product_id].qty += item.quantity;
     productSalesMap[item.product_id].total += item.total_price;
   }
-  const sortedProductSales = Object.values(productSalesMap).sort((a, b) => b.total - a.total);
+  const topProducts = Object.values(productSalesMap).sort((a, b) => b.total - a.total);
 
   return (
     <div className="space-y-6">
@@ -74,12 +97,22 @@ export const ReportsView: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-1.5 text-xs">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <button
+            type="button"
+            onClick={handleOpenGeneralReprintCenter}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold transition shadow-sm"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reprint Center</span>
+          </button>
+
           {[
             { id: 'sales', label: 'Summary' },
             { id: 'payment_methods', label: 'Payment Methods' },
             { id: 'products', label: 'By Product' },
             { id: 'shifts', label: 'Shift History' },
+            { id: 'queues', label: 'Email / SMS Queues' },
             { id: 'offline_sync', label: `Offline Sync (${pendingSyncSales.length})` },
           ].map(tab => (
             <button
@@ -114,7 +147,7 @@ export const ReportsView: React.FC = () => {
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
           <span className="text-xs font-semibold text-slate-400 uppercase">VAT / Taxes Collected</span>
           <p className="text-2xl font-bold text-sky-400 font-mono mt-1">{formatMoney(totalTax)}</p>
-          <span className="text-[11px] text-slate-400 mt-2 block">Standard 18% VAT</span>
+          <span className="text-[11px] text-slate-400 mt-2 block">18% Standard rate breakdown</span>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
@@ -134,6 +167,7 @@ export const ReportsView: React.FC = () => {
             <span>Payment</span>
             <span>Total</span>
             <span>Status</span>
+            <span className="text-right">Actions</span>
           </div>
 
           <div className="divide-y divide-slate-800/80 max-h-96 overflow-y-auto">
@@ -141,7 +175,7 @@ export const ReportsView: React.FC = () => {
               <div className="p-8 text-center text-slate-500 text-xs">No sales completed yet.</div>
             ) : (
               sales.map(sale => (
-                <div key={sale.id} className="p-3 bg-slate-950/40 flex items-center justify-between text-xs">
+                <div key={sale.id} className="p-3 bg-slate-950/40 flex items-center justify-between text-xs hover:bg-slate-900/60 transition">
                   <span className="font-mono font-bold text-sky-400">{sale.receipt_number}</span>
                   <span className="text-slate-400">{new Date(sale.created_at).toLocaleString()}</span>
                   <span className="text-slate-300 font-mono">{sale.items_count} items</span>
@@ -156,6 +190,17 @@ export const ReportsView: React.FC = () => {
                   >
                     {sale.sync_status === 'synced' ? 'Synced' : 'Offline Pending'}
                   </span>
+                  <div className="text-right">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenReprintForSale(sale)}
+                      className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-sky-300 hover:text-white rounded-lg text-[11px] font-bold flex items-center gap-1 border border-slate-700 transition"
+                      title="View & Reprint Receipt"
+                    >
+                      <Printer className="w-3 h-3" />
+                      <span>Receipt</span>
+                    </button>
+                  </div>
                 </div>
               ))
             )}
@@ -179,36 +224,36 @@ export const ReportsView: React.FC = () => {
             <p className="text-xl font-bold text-white font-mono mt-1">{formatMoney(walletSales)}</p>
           </div>
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
-            <span className="text-xs font-bold text-amber-400 uppercase">QR Code</span>
+            <span className="text-xs font-bold text-amber-400 uppercase">QR Payments</span>
             <p className="text-xl font-bold text-white font-mono mt-1">{formatMoney(qrSales)}</p>
           </div>
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
-            <span className="text-xs font-bold text-blue-400 uppercase">Split Tender</span>
+            <span className="text-xs font-bold text-indigo-400 uppercase">Split Payments</span>
             <p className="text-xl font-bold text-white font-mono mt-1">{formatMoney(splitSales)}</p>
           </div>
         </div>
       )}
 
-      {/* Tab 3: Sales By Product */}
+      {/* Tab 3: Sales by Product */}
       {activeReportTab === 'products' && (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
           <div className="p-4 bg-slate-950/70 border-b border-slate-800 flex justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
             <span>Product Name</span>
             <span>SKU</span>
-            <span>Quantity Sold</span>
-            <span>Total Revenue</span>
+            <span>Units Sold</span>
+            <span className="text-right">Revenue Generated</span>
           </div>
 
           <div className="divide-y divide-slate-800/80 max-h-96 overflow-y-auto">
-            {sortedProductSales.length === 0 ? (
-              <div className="p-8 text-center text-slate-500 text-xs">No product sales data yet.</div>
+            {topProducts.length === 0 ? (
+              <div className="p-8 text-center text-slate-500 text-xs">No product sales recorded yet.</div>
             ) : (
-              sortedProductSales.map((ps, idx) => (
-                <div key={idx} className="p-3 bg-slate-950/40 flex items-center justify-between text-xs">
-                  <span className="font-bold text-slate-200">{ps.name}</span>
-                  <span className="font-mono text-slate-400">{ps.sku}</span>
-                  <span className="font-mono font-bold text-slate-300">{ps.qty} units</span>
-                  <span className="font-mono font-bold text-emerald-400">{formatMoney(ps.total)}</span>
+              topProducts.map(prod => (
+                <div key={prod.sku} className="p-3 bg-slate-950/40 flex items-center justify-between text-xs">
+                  <span className="font-bold text-white">{prod.name}</span>
+                  <span className="font-mono text-slate-400">{prod.sku}</span>
+                  <span className="font-mono text-slate-200">{prod.qty} units</span>
+                  <span className="font-mono font-bold text-emerald-400 text-right">{formatMoney(prod.total)}</span>
                 </div>
               ))
             )}
@@ -221,52 +266,62 @@ export const ReportsView: React.FC = () => {
         <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
           <div className="p-4 bg-slate-950/70 border-b border-slate-800 flex justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
             <span>Shift ID</span>
-            <span>Opened At</span>
-            <span>Closed At</span>
-            <span>Float</span>
-            <span>Sales</span>
-            <span>Variance</span>
+            <span>Opened</span>
             <span>Status</span>
+            <span>Total Sales</span>
+            <span>Variance</span>
           </div>
 
           <div className="divide-y divide-slate-800/80 max-h-96 overflow-y-auto">
-            {shifts.map(sh => (
-              <div key={sh.id} className="p-3 bg-slate-950/40 flex items-center justify-between text-xs">
-                <span className="font-mono font-bold text-sky-400">#{sh.id.slice(0, 8)}</span>
-                <span className="text-slate-400">{new Date(sh.opened_at).toLocaleTimeString()}</span>
-                <span className="text-slate-400">
-                  {sh.closed_at ? new Date(sh.closed_at).toLocaleTimeString() : 'In Progress'}
-                </span>
-                <span className="font-mono text-slate-300">{formatMoney(sh.opening_float)}</span>
-                <span className="font-mono font-bold text-emerald-400">{formatMoney(sh.total_sales || 0)}</span>
-                <span
-                  className={`font-mono font-bold ${
-                    (sh.variance || 0) === 0 ? 'text-slate-400' : (sh.variance || 0) > 0 ? 'text-blue-400' : 'text-rose-400'
-                  }`}
-                >
-                  {formatMoney(sh.variance || 0)}
-                </span>
-                <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    sh.status === 'open'
-                      ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                      : 'bg-slate-800 text-slate-400 border border-slate-700'
-                  }`}
-                >
-                  {sh.status.toUpperCase()}
-                </span>
-              </div>
-            ))}
+            {shifts.length === 0 ? (
+              <div className="p-8 text-center text-slate-500 text-xs">No shifts recorded.</div>
+            ) : (
+              shifts.map(shift => (
+                <div key={shift.id} className="p-3 bg-slate-950/40 flex items-center justify-between text-xs">
+                  <span className="font-mono font-bold text-sky-400">{shift.id.slice(0, 12)}...</span>
+                  <span className="text-slate-400">{new Date(shift.opened_at).toLocaleString()}</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                      shift.status === 'open'
+                        ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {shift.status}
+                  </span>
+                  <span className="font-mono font-bold text-white">{formatMoney(shift.total_sales)}</span>
+                  <span
+                    className={`font-mono font-bold ${
+                      (shift.variance || 0) < 0
+                        ? 'text-rose-400'
+                        : (shift.variance || 0) > 0
+                        ? 'text-emerald-400'
+                        : 'text-slate-400'
+                    }`}
+                  >
+                    {shift.variance !== undefined ? formatMoney(shift.variance) : 'N/A'}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
 
-      {/* Tab 5: Offline Sync Telemetry Report */}
+      {/* Tab 5: Notification Queues */}
+      {activeReportTab === 'queues' && <NotificationQueuesView />}
+
+      {/* Tab 6: Offline Resilience & Sync Telemetry */}
       {activeReportTab === 'offline_sync' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3">
-          <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
-            <CloudOff className="w-5 h-5" />
-            <span>Offline Transaction Audit &amp; Reconciliation</span>
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+          <div className="flex items-center gap-3">
+            <CloudOff className="w-6 h-6 text-amber-400" />
+            <div>
+              <h3 className="text-sm font-bold text-white">Offline Resilience Telemetry</h3>
+              <p className="text-xs text-slate-400">
+                {pendingSyncSales.length} transaction(s) pending cloud upload
+              </p>
+            </div>
           </div>
           <p className="text-xs text-slate-400">
             All offline sales are stored locally in IndexedDB with cryptographic idempotency keys. Upon reconnecting, they sync safely to Supabase without duplicate danger.
@@ -293,6 +348,18 @@ export const ReportsView: React.FC = () => {
             )}
           </div>
         </div>
+      )}
+
+      {/* Reprint Modal */}
+      {isReprintModalOpen && (
+        <ReprintModal
+          initialReceipt={selectedReceiptForReprint}
+          onClose={() => {
+            setIsReprintModalOpen(false);
+            setSelectedReceiptForReprint(null);
+            loadReportData();
+          }}
+        />
       )}
     </div>
   );

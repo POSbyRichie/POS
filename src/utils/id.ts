@@ -15,12 +15,12 @@ export function generateUUID(): string {
 
 /**
  * Generate human-readable invoice / receipt numbers
- * e.g. INV-20260919-00123
+ * Format: CR-01-YYYYMMDD-000001
  */
-export function generateReceiptNumber(sequence: number = Math.floor(Math.random() * 90000) + 10000): string {
+export function generateReceiptNumber(sequence: number = Math.floor(Math.random() * 90000) + 10000, registerCode: string = '01'): string {
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const seqStr = String(sequence).padStart(5, '0');
-  return `INV-${dateStr}-${seqStr}`;
+  const seqStr = String(sequence).padStart(6, '0');
+  return `CR-${registerCode}-${dateStr}-${seqStr}`;
 }
 
 /**

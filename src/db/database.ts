@@ -20,6 +20,8 @@ import {
   LoyaltyAccount,
   LoyaltyTransaction,
   Receipt,
+  EmailQueueItem,
+  SmsQueueItem,
   SyncQueueItem,
   SyncError,
   AuditLog,
@@ -49,6 +51,8 @@ export class PosDatabase extends Dexie {
   loyaltyAccounts!: Table<LoyaltyAccount, string>;
   loyaltyTransactions!: Table<LoyaltyTransaction, string>;
   receipts!: Table<Receipt, string>;
+  emailQueue!: Table<EmailQueueItem, string>;
+  smsQueue!: Table<SmsQueueItem, string>;
   syncQueue!: Table<SyncQueueItem, number>;
   syncErrors!: Table<SyncError, number>;
   auditLogs!: Table<AuditLog, number>;

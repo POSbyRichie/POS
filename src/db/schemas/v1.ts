@@ -23,6 +23,8 @@ export const schemaV1 = {
   loyaltyAccounts: 'id, customer_id, tier',
   loyaltyTransactions: 'id, idempotency_key, customer_id, sale_id, type, sync_status',
   receipts: 'id, sale_id, receipt_number, sync_status',
+  emailQueue: 'id, receipt_id, receipt_number, status, created_at',
+  smsQueue: 'id, receipt_id, receipt_number, status, created_at',
   syncQueue: '++id, entity_type, entity_id, idempotency_key, status, created_at',
   syncErrors: '++id, entity_type, entity_id, resolved, created_at',
   auditLogs: '++id, user_id, action, timestamp',

@@ -6,10 +6,14 @@ import {
   CheckCircle,
   X,
   ArrowRight,
+  RotateCcw,
 } from 'lucide-react';
 import { usePos } from '../../store/posStore';
 import { printService } from '../../services/printService';
-import { formatMoney, DEFAULT_STORE_INFO } from '../../utils/money';
+import { receiptService } from '../../services/receiptService';
+import { notificationQueueService } from '../../services/notificationQueueService';
+import { ReceiptPreview } from './ReceiptPreview';
+import { Receipt } from '../../types';
 
 interface ReceiptModalProps {
   onClose: () => void;
@@ -17,37 +21,86 @@ interface ReceiptModalProps {
 }
 
 export const ReceiptModal: React.FC<ReceiptModalProps> = ({ onClose, onProceedToCompleted }) => {
-  const { lastCompletedSaleResult, activeRegister, currentUser } = usePos();
+  const { lastCompletedSaleResult, currentUser } = usePos();
   const [emailInput, setEmailInput] = useState<string>('');
   const [smsInput, setSmsInput] = useState<string>('');
   const [emailQueued, setEmailQueued] = useState<boolean>(false);
   const [smsQueued, setSmsQueued] = useState<boolean>(false);
+  const [activeReceipt, setActiveReceipt] = useState<Receipt | null>(
+    lastCompletedSaleResult?.receipt || null
+  );
+  const [isReprinting, setIsReprinting] = useState<boolean>(false);
 
-  if (!lastCompletedSaleResult) return null;
+  if (!lastCompletedSaleResult || !activeReceipt) return null;
 
-  const { sale, items, payments, loyaltyTransaction, newCustomerPoints } = lastCompletedSaleResult;
+  const { sale } = lastCompletedSaleResult;
 
   const handlePrint = () => {
-    printService.printReceipt();
+    printService.printReceipt('printable-receipt');
   };
 
-  const handleQueueEmail = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!emailInput) return;
-    setEmailQueued(true);
+  const handleReprint = async () => {
+    setIsReprinting(true);
+    try {
+      const cashierName = currentUser?.full_name || 'Cashier';
+      const cashierId = currentUser?.id || 'system';
+      const { receipt: updated } = await receiptService.reprintReceipt(
+        activeReceipt.id,
+        cashierId,
+        cashierName
+      );
+      setActiveReceipt(updated);
+      printService.printReceipt('printable-receipt');
+    } catch (err) {
+      console.error('Reprint error:', err);
+    } finally {
+      setIsReprinting(false);
+    }
   };
 
-  const handleQueueSms = (e: React.FormEvent) => {
+  const handleQueueEmail = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!smsInput) return;
-    setSmsQueued(true);
+    if (!emailInput || !emailInput.includes('@')) return;
+
+    try {
+      const parsed = receiptService.parseReceiptContent(activeReceipt);
+      await notificationQueueService.queueEmail({
+        receiptId: activeReceipt.id,
+        saleId: sale.id,
+        receiptNumber: activeReceipt.receipt_number,
+        recipientEmail: emailInput.trim(),
+        customerName: parsed.customer?.name,
+      });
+      setEmailQueued(true);
+    } catch (err) {
+      console.error('Failed to queue email:', err);
+    }
+  };
+
+  const handleQueueSms = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!smsInput || smsInput.trim().length < 7) return;
+
+    try {
+      const parsed = receiptService.parseReceiptContent(activeReceipt);
+      await notificationQueueService.queueSms({
+        receiptId: activeReceipt.id,
+        saleId: sale.id,
+        receiptNumber: activeReceipt.receipt_number,
+        phoneNumber: smsInput.trim(),
+        customerName: parsed.customer?.name,
+      });
+      setSmsQueued(true);
+    } catch (err) {
+      console.error('Failed to queue SMS:', err);
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150 flex flex-col md:flex-row">
-        {/* Left Column: Actions (Print, Email, SMS, Next) */}
-        <div className="w-full md:w-5/12 p-6 border-b md:border-b-0 md:border-r border-slate-800 flex flex-col justify-between space-y-4">
+      <div className="bg-slate-900 border border-slate-800 w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150 flex flex-col md:flex-row max-h-[92vh]">
+        {/* Left Column: Actions (Print, Reprint, Email, SMS, Next) */}
+        <div className="w-full md:w-5/12 p-5 border-b md:border-b-0 md:border-r border-slate-800 flex flex-col justify-between overflow-y-auto space-y-4">
           <div>
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2 text-sky-400 font-bold text-sm">
@@ -62,16 +115,36 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ onClose, onProceedTo
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-xs text-slate-400 mb-4">Print, queue digital receipt, or continue to sale completion</p>
+            <p className="text-xs text-slate-400 mb-4">
+              Number: <span className="font-mono font-bold text-sky-300">{activeReceipt.receipt_number}</span>
+            </p>
 
             {/* Primary Action: Print Receipt */}
-            <button
-              onClick={handlePrint}
-              className="w-full py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-sky-600/30 flex items-center justify-center gap-2 mb-3"
-            >
-              <Printer className="w-4 h-4" />
-              PRINT THERMAL RECEIPT
-            </button>
+            <div className="grid grid-cols-1 gap-2 mb-4">
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="w-full py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-sky-600/30 flex items-center justify-center gap-2"
+              >
+                <Printer className="w-4 h-4" />
+                PRINT THERMAL RECEIPT
+              </button>
+
+              <button
+                type="button"
+                onClick={handleReprint}
+                disabled={isReprinting}
+                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold rounded-xl text-xs transition border border-slate-700 flex items-center justify-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                <span>REPRINT (DUPLICATE)</span>
+                {activeReceipt.reprint_count > 0 && (
+                  <span className="ml-1 px-1.5 py-0.5 bg-amber-950 text-amber-300 text-[10px] rounded-full border border-amber-800">
+                    #{activeReceipt.reprint_count}
+                  </span>
+                )}
+              </button>
+            </div>
 
             {/* Email Queue */}
             <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2 mb-3">
@@ -86,7 +159,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ onClose, onProceedTo
                     value={emailInput}
                     onChange={e => setEmailInput(e.target.value)}
                     placeholder="customer@email.com"
-                    className="flex-1 px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white"
+                    className="flex-1 px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder:text-slate-500"
                   />
                   <button
                     type="submit"
@@ -97,7 +170,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ onClose, onProceedTo
                 </form>
               ) : (
                 <p className="text-[11px] text-emerald-400 flex items-center gap-1 font-semibold">
-                  <CheckCircle className="w-3 h-3" /> Queued for dispatch on sync!
+                  <CheckCircle className="w-3.5 h-3.5" /> Enqueued for offline sync!
                 </p>
               )}
             </div>
@@ -115,7 +188,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ onClose, onProceedTo
                     value={smsInput}
                     onChange={e => setSmsInput(e.target.value)}
                     placeholder="+256 700 000000"
-                    className="flex-1 px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-mono"
+                    className="flex-1 px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-mono placeholder:text-slate-500"
                   />
                   <button
                     type="submit"
@@ -126,7 +199,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ onClose, onProceedTo
                 </form>
               ) : (
                 <p className="text-[11px] text-emerald-400 flex items-center gap-1 font-semibold">
-                  <CheckCircle className="w-3 h-3" /> Queued for SMS delivery!
+                  <CheckCircle className="w-3.5 h-3.5" /> Enqueued for SMS delivery!
                 </p>
               )}
             </div>
@@ -145,110 +218,8 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ onClose, onProceedTo
         </div>
 
         {/* Right Column: Thermal Paper Preview */}
-        <div className="w-full md:w-7/12 bg-slate-950 p-6 flex flex-col items-center justify-center">
-          <div
-            id="printable-receipt"
-            className="w-full max-w-xs bg-white text-slate-900 p-5 rounded-lg shadow-2xl font-mono text-[11px] leading-tight select-text"
-          >
-            {/* Header */}
-            <div className="text-center pb-3 border-b border-dashed border-slate-400">
-              <h4 className="font-extrabold text-sm uppercase tracking-wide">{DEFAULT_STORE_INFO.name}</h4>
-              <p className="text-[10px] text-slate-600">{DEFAULT_STORE_INFO.tagline}</p>
-              <p className="text-[10px] text-slate-600 mt-1">{DEFAULT_STORE_INFO.address}</p>
-              <p className="text-[10px] text-slate-600">TEL: {DEFAULT_STORE_INFO.phone}</p>
-              <p className="text-[10px] text-slate-600">TAX ID: {DEFAULT_STORE_INFO.tax_id}</p>
-            </div>
-
-            {/* Receipt Meta */}
-            <div className="py-2.5 border-b border-dashed border-slate-400 text-[10px] space-y-0.5">
-              <div className="flex justify-between font-bold">
-                <span>RECEIPT:</span>
-                <span>{sale.receipt_number}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>DATE:</span>
-                <span>{new Date(sale.created_at).toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>TERMINAL:</span>
-                <span>{activeRegister?.register_name}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>CASHIER:</span>
-                <span>{currentUser?.full_name}</span>
-              </div>
-              {newCustomerPoints !== undefined && (
-                <div className="flex justify-between text-emerald-800 font-bold pt-0.5">
-                  <span>LOYALTY POINTS:</span>
-                  <span>{newCustomerPoints} pts (+{loyaltyTransaction?.points_delta || 0})</span>
-                </div>
-              )}
-            </div>
-
-            {/* Line Items */}
-            <div className="py-2.5 border-b border-dashed border-slate-400 space-y-1.5">
-              <div className="flex justify-between font-bold text-[10px] pb-1 border-b border-slate-300">
-                <span>ITEM / QTY</span>
-                <span>TOTAL</span>
-              </div>
-              {items.map(item => (
-                <div key={item.id} className="space-y-0.5">
-                  <span className="font-bold block truncate">{item.product_name}</span>
-                  <div className="flex justify-between text-slate-600 text-[10px]">
-                    <span>
-                      {item.quantity} x {formatMoney(item.unit_price)}
-                    </span>
-                    <span className="font-bold text-slate-900">{formatMoney(item.total_price)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Financial Breakdown */}
-            <div className="py-2.5 border-b border-dashed border-slate-400 space-y-1 text-[10px]">
-              <div className="flex justify-between">
-                <span>SUBTOTAL:</span>
-                <span>{formatMoney(sale.subtotal)}</span>
-              </div>
-              {sale.discount_amount > 0 && (
-                <div className="flex justify-between text-emerald-800 font-bold">
-                  <span>DISCOUNTS:</span>
-                  <span>-{formatMoney(sale.discount_amount)}</span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span>TAX (VAT):</span>
-                <span>{formatMoney(sale.tax_amount)}</span>
-              </div>
-              <div className="flex justify-between font-extrabold text-xs pt-1 border-t border-slate-400">
-                <span>TOTAL DUE:</span>
-                <span>{formatMoney(sale.total_amount)}</span>
-              </div>
-            </div>
-
-            {/* Payments & Change */}
-            <div className="py-2 border-b border-dashed border-slate-400 space-y-0.5 text-[10px]">
-              {payments.map(p => (
-                <div key={p.id} className="flex justify-between">
-                  <span className="uppercase">PAID ({p.method}):</span>
-                  <span className="font-bold">{formatMoney(p.amount_paid)}</span>
-                </div>
-              ))}
-              {sale.change_amount > 0 && (
-                <div className="flex justify-between font-bold pt-0.5">
-                  <span>CHANGE GIVEN:</span>
-                  <span>{formatMoney(sale.change_amount)}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="text-center pt-3 text-[9px] text-slate-600 space-y-1">
-              <p className="font-bold uppercase tracking-wider">THANK YOU FOR SHOPPING WITH US!</p>
-              <p>PLEASE RETAIN YOUR RECEIPT</p>
-              <p className="font-mono text-[8px] mt-1 text-slate-400">UUID: {sale.id}</p>
-            </div>
-          </div>
+        <div className="w-full md:w-7/12 bg-slate-950 p-5 flex flex-col items-center justify-center overflow-y-auto max-h-[85vh]">
+          <ReceiptPreview receipt={activeReceipt} />
         </div>
       </div>
     </div>

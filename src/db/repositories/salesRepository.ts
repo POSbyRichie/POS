@@ -13,8 +13,9 @@ import {
   PaymentBreakdown,
   PaymentMethod,
 } from '../../types';
-import { generateUUID, generateReceiptNumber } from '../../utils/id';
+import { generateUUID } from '../../utils/id';
 import { calculateCartTotals, DEFAULT_STORE_INFO } from '../../utils/money';
+import { receiptNumberService } from '../../services/receiptNumberService';
 
 export interface CreateSaleTransactionParams {
   items: CartItem[];
@@ -85,7 +86,7 @@ export class SalesRepository extends BaseRepository<Sale, string> {
     const changeAmount = Math.max(0, totalPaid - totals.grandTotal);
     const saleId = generateUUID();
     const idempotencyKey = `sale-${saleId}`;
-    const receiptNumber = generateReceiptNumber();
+    const { receiptNumber } = await receiptNumberService.generateReceiptNumber(this.db, { registerId });
     const now = new Date().toISOString();
 
     const paymentMethod: PaymentMethod = payments.length === 1 ? payments[0].method : 'split';
@@ -177,8 +178,9 @@ export class SalesRepository extends BaseRepository<Sale, string> {
       receipt_number: receiptNumber,
       content_json: JSON.stringify(receiptContent),
       printed_at: now,
-      email_queued: emailReceipt,
-      sms_queued: smsReceipt,
+      reprint_count: 0,
+      email_queued: Boolean(emailReceipt),
+      sms_queued: Boolean(smsReceipt),
       email_recipient: emailRecipient,
       sms_recipient: smsRecipient,
       sync_status: 'pending',
@@ -202,6 +204,8 @@ export class SalesRepository extends BaseRepository<Sale, string> {
         this.db.inventoryMovements,
         this.db.syncQueue,
         this.db.auditLogs,
+        this.db.emailQueue,
+        this.db.smsQueue,
       ],
       async () => {
         // 1. Insert Sale & Line Items & Payments
@@ -347,6 +351,41 @@ export class SalesRepository extends BaseRepository<Sale, string> {
           timestamp: now,
           sync_status: 'pending',
         });
+
+        // 9. Enqueue Email if requested
+        if (emailReceipt && emailRecipient) {
+          await this.db.emailQueue.put({
+            id: generateUUID(),
+            receipt_id: receiptRecord.id,
+            sale_id: saleId,
+            receipt_number: receiptNumber,
+            recipient_email: emailRecipient.trim().toLowerCase(),
+            customer_name: customer?.name,
+            subject: `Your Receipt from Antigravity POS (${receiptNumber})`,
+            html_body: `<p>Thank you for your purchase! Receipt: <strong>${receiptNumber}</strong></p>`,
+            status: 'queued',
+            attempts: 0,
+            max_attempts: 3,
+            created_at: now,
+          });
+        }
+
+        // 10. Enqueue SMS if requested
+        if (smsReceipt && smsRecipient) {
+          await this.db.smsQueue.put({
+            id: generateUUID(),
+            receipt_id: receiptRecord.id,
+            sale_id: saleId,
+            receipt_number: receiptNumber,
+            phone_number: smsRecipient.trim(),
+            customer_name: customer?.name,
+            message_text: `Antigravity POS: Receipt ${receiptNumber} confirmed. Total: ${totals.grandTotal}. Thank you!`,
+            status: 'queued',
+            attempts: 0,
+            max_attempts: 3,
+            created_at: now,
+          });
+        }
       }
     );
 
