@@ -1,4 +1,4 @@
-import { db } from '../db';
+import { db, inventoryRepository } from '../db';
 import { Product, InventoryMovement, CartItem, InventoryMovementType } from '../types';
 import { generateUUID } from '../utils/id';
 
@@ -7,16 +7,7 @@ export class InventoryService {
    * Check locally available stock for a product (Step 6)
    */
   async checkStock(productId: string): Promise<{ inStock: boolean; available: number; product: Product | null }> {
-    const product = await db.products.get(productId);
-    if (!product) {
-      return { inStock: false, available: 0, product: null };
-    }
-    const available = product.stock_quantity;
-    return {
-      inStock: available > 0,
-      available,
-      product,
-    };
+    return inventoryRepository.checkStock(productId);
   }
 
   /**
@@ -32,6 +23,7 @@ export class InventoryService {
     userId: string
   ): Promise<InventoryMovement[]> {
     const movements: InventoryMovement[] = [];
+    const now = new Date().toISOString();
 
     await db.transaction('rw', [db.products, db.inventoryMovements, db.syncQueue], async () => {
       for (const item of items) {
@@ -45,7 +37,7 @@ export class InventoryService {
         // Decrement stock
         await db.products.update(product.id, {
           stock_quantity: newQuantity,
-          updated_at: new Date().toISOString(),
+          updated_at: now,
         });
 
         const movement: InventoryMovement = {
@@ -61,7 +53,7 @@ export class InventoryService {
           reference_id: saleId,
           user_id: userId,
           notes: `Sold in Sale #${saleId.slice(0, 8)}`,
-          timestamp: new Date().toISOString(),
+          timestamp: now,
           sync_status: 'pending',
         };
 
@@ -78,7 +70,7 @@ export class InventoryService {
           attempts: 0,
           max_attempts: 10,
           status: 'pending',
-          created_at: new Date().toISOString(),
+          created_at: now,
         });
       }
     });
@@ -97,52 +89,7 @@ export class InventoryService {
     userId: string,
     notes?: string
   ): Promise<InventoryMovement> {
-    let resultMovement: InventoryMovement | null = null;
-
-    await db.transaction('rw', [db.products, db.inventoryMovements, db.syncQueue], async () => {
-      const product = await db.products.get(productId);
-      if (!product) throw new Error('Product not found');
-
-      const previousQuantity = product.stock_quantity;
-      const newQuantity = previousQuantity + quantityDelta;
-
-      await db.products.update(productId, {
-        stock_quantity: newQuantity,
-        updated_at: new Date().toISOString(),
-      });
-
-      const movement: InventoryMovement = {
-        id: generateUUID(),
-        idempotency_key: `inv-adj-${Date.now()}-${productId}`,
-        product_id: productId,
-        register_id: registerId,
-        type,
-        quantity_delta: quantityDelta,
-        previous_quantity: previousQuantity,
-        new_quantity: newQuantity,
-        user_id: userId,
-        notes: notes || `Stock ${type}`,
-        timestamp: new Date().toISOString(),
-        sync_status: 'pending',
-      };
-
-      await db.inventoryMovements.put(movement);
-      resultMovement = movement;
-
-      await db.syncQueue.add({
-        entity_type: 'inventory_movement',
-        entity_id: movement.id,
-        operation: 'INSERT',
-        payload: JSON.stringify(movement),
-        idempotency_key: movement.idempotency_key,
-        attempts: 0,
-        max_attempts: 10,
-        status: 'pending',
-        created_at: new Date().toISOString(),
-      });
-    });
-
-    return resultMovement!;
+    return inventoryRepository.adjustStock(productId, quantityDelta, type, registerId, userId, notes);
   }
 }
 
