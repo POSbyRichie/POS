@@ -270,3 +270,76 @@ export interface StoreInfo {
   currency_decimals: number; // 0 for UGX/JPY, 2 for USD/EUR
   loyalty_rate: number; // e.g. 1 point per 1000 minor units
 }
+
+export interface Store {
+  id: string;
+  code: string;
+  name: string;
+  tagline: string;
+  address: string;
+  phone: string;
+  email?: string;
+  tax_id: string;
+  currency_code: string;
+  currency_symbol: string;
+  currency_decimals: number;
+  loyalty_rate: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description: string;
+  is_system: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Permission {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  created_at: string;
+}
+
+export interface RolePermission {
+  role_id: string;
+  permission_id: string;
+  created_at: string;
+}
+
+export interface Inventory {
+  id: string;
+  store_id: string;
+  product_id: string;
+  quantity: number;
+  low_stock_threshold: number;
+  updated_at: string;
+}
+
+export interface PaymentItem {
+  id: string;
+  payment_id: string;
+  method: string;
+  amount_paid: number;
+  change_given: number;
+  reference?: string;
+  provider_response?: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface LoyaltyAccount {
+  id: string;
+  customer_id: string;
+  points_balance: number;
+  lifetime_points_earned: number;
+  lifetime_points_redeemed: number;
+  tier: string;
+  created_at: string;
+  updated_at: string;
+}
+
