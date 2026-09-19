@@ -389,6 +389,15 @@ export class SalesRepository extends BaseRepository<Sale, string> {
       }
     );
 
+    // Notify sync engine that a new offline transaction was persisted in IndexedDB
+    try {
+      import('../../sync').then(({ syncEngine }) => {
+        syncEngine.notifyNewTransaction().catch(() => {});
+      }).catch(() => {});
+    } catch {
+      // Background telemetry notification failure should never block checkout
+    }
+
     return {
       sale: saleRecord,
       items: saleItemRecords,

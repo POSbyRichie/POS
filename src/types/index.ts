@@ -406,3 +406,5 @@ export interface LoyaltyAccount {
   updated_at: string;
 }
 
+export type { SyncTelemetry, SyncStage } from '../sync/types';
+

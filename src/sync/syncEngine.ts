@@ -4,6 +4,8 @@ import { SyncQueueItem } from '../types';
 import { connectivityService } from '../services/connectivity';
 import { syncQueue, SyncQueue } from './syncQueue';
 import { conflictResolver, ConflictResolver } from './conflictResolver';
+import { retryManager, RetryManager } from './retryManager';
+import { SyncStage, SyncTelemetry, SyncTelemetryCallback } from './types';
 import { logger } from '../utils/logger';
 
 export interface SyncStats {
@@ -19,28 +21,50 @@ export type SyncProgressCallback = (stats: SyncStats) => void;
 export class SyncEngine {
   private supabase: SupabaseClient | null = null;
   private isProcessing = false;
-  private subscribers: Set<SyncProgressCallback> = new Set();
+  private legacySubscribers: Set<SyncProgressCallback> = new Set();
+  private telemetrySubscribers: Set<SyncTelemetryCallback> = new Set();
   private lastSyncedAt: string | null = null;
   private syncIntervalId: ReturnType<typeof setInterval> | null = null;
   private unsubscribeConnectivity: (() => void) | null = null;
+  private unsubscribeRetryCountdown: (() => void) | null = null;
+
+  private currentStage: SyncStage = 'idle';
+  private currentTelemetryMessage: string = 'All transactions synchronized';
+  private currentRetryCount: number = 0;
+  private nextRetrySeconds: number = 0;
+  private synchronizedClearTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private readonly database: PosDatabase = db,
     private readonly queue: SyncQueue = syncQueue,
-    private readonly resolver: ConflictResolver = conflictResolver
+    private readonly resolver: ConflictResolver = conflictResolver,
+    private readonly retrier: RetryManager = retryManager
   ) {
     this.initSupabase();
 
-    // Listen to network changes - trigger only on transition to online
-    let prevStatus = connectivityService.getStatus();
-    this.unsubscribeConnectivity = connectivityService.subscribe(status => {
-      if (status === 'online' && prevStatus !== 'online') {
+    // Listen to network status changes (transition from offline to online)
+    let prevOnline = connectivityService.isOnline();
+    this.unsubscribeConnectivity = connectivityService.subscribe(() => {
+      const isOnline = connectivityService.isOnline();
+      if (isOnline && !prevOnline) {
+        this.retrier.cancelScheduledRetry();
         this.processQueue();
+      } else if (!isOnline) {
+        this.emitTelemetry();
       }
-      prevStatus = status;
+      prevOnline = isOnline;
     });
 
-    // Auto-sync interval every 30 seconds when online
+    // Listen to retry countdown ticks
+    this.unsubscribeRetryCountdown = this.retrier.subscribeCountdown(seconds => {
+      this.nextRetrySeconds = seconds;
+      if (this.currentStage === 'sync_failed') {
+        this.currentTelemetryMessage = `Sync paused (attempt ${this.currentRetryCount}) — Retrying in ${seconds}s…`;
+        this.emitTelemetry();
+      }
+    });
+
+    // Periodic auto-sync interval when online (every 30s)
     if (typeof window !== 'undefined') {
       this.syncIntervalId = setInterval(() => {
         if (connectivityService.isOnline() && !this.isProcessing) {
@@ -83,31 +107,187 @@ export class SyncEngine {
     return this.supabase !== null && connectivityService.isOnline();
   }
 
-  public subscribe(callback: SyncProgressCallback): () => void {
-    this.subscribers.add(callback);
-    this.emitStats();
-    return () => this.subscribers.delete(callback);
-  }
-
-  public async emitStats(): Promise<void> {
-    if (!this.database.isOpen()) {
-      await this.database.open();
-    }
-    const { pendingCount, failedCount, syncedCount } = await this.queue.getStats();
-
-    const stats: SyncStats = {
-      pendingCount,
-      syncedCount,
-      failedCount,
-      isSyncing: this.isProcessing,
-      lastSyncedAt: this.lastSyncedAt,
-    };
-
-    this.subscribers.forEach(cb => cb(stats));
+  /**
+   * Subscribe to fine-grained SyncTelemetry updates
+   */
+  public subscribeTelemetry(callback: SyncTelemetryCallback): () => void {
+    this.telemetrySubscribers.add(callback);
+    this.emitTelemetry();
+    return () => this.telemetrySubscribers.delete(callback);
   }
 
   /**
-   * Main synchronization loop: processes pending offline queue items in FIFO order
+   * Legacy subscriber for backwards compatibility with existing components
+   */
+  public subscribe(callback: SyncProgressCallback): () => void {
+    this.legacySubscribers.add(callback);
+    this.emitStats();
+    return () => this.legacySubscribers.delete(callback);
+  }
+
+  /**
+   * Notify sync engine that a new offline transaction was written to IndexedDB
+   */
+  public async notifyNewTransaction(): Promise<void> {
+    if (!connectivityService.isOnline()) {
+      await this.emitTelemetry();
+      return;
+    }
+    // If online, schedule immediate batch process
+    await this.processQueue();
+  }
+
+  /**
+   * Cancel any pending retry timers and immediately trigger synchronization
+   */
+  public async retryNow(): Promise<{ processed: number; errors: number }> {
+    this.retrier.cancelScheduledRetry();
+    try {
+      await this.database.syncQueue
+        .where('status')
+        .equals('failed')
+        .modify({ status: 'pending' });
+    } catch {
+      // safe fallback
+    }
+    return this.processQueue();
+  }
+
+  /**
+   * Generates formatted real-time status message based on state
+   */
+  private generateStatusMessage(
+    stage: SyncStage,
+    pendingCount: number,
+    currentIndex?: number,
+    totalInBatch?: number,
+    retryCount?: number,
+    retrySeconds?: number
+  ): string {
+    const isOnline = connectivityService.isOnline();
+
+    if (!isOnline) {
+      if (pendingCount > 0) {
+        const noun = pendingCount === 1 ? 'transaction' : 'transactions';
+        return `Offline — ${pendingCount} ${noun} waiting to sync`;
+      }
+      return 'Offline — All transactions synchronized';
+    }
+
+    if (stage === 'syncing') {
+      const count = totalInBatch || pendingCount;
+      if (currentIndex && count && count > 1) {
+        return `Syncing transaction ${currentIndex} of ${count}…`;
+      }
+      return `Syncing ${count} transaction${count === 1 ? '' : 's'}…`;
+    }
+
+    if (stage === 'synchronized') {
+      return 'All transactions synchronized';
+    }
+
+    if (stage === 'sync_failed') {
+      const sec = retrySeconds || 0;
+      return `Sync paused (attempt ${retryCount || 1}) — Retrying in ${sec}s…`;
+    }
+
+    if (pendingCount > 0) {
+      const noun = pendingCount === 1 ? 'transaction' : 'transactions';
+      return `${pendingCount} ${noun} waiting to sync`;
+    }
+
+    return 'All transactions synchronized';
+  }
+
+  /**
+   * Broadcasts the current sync telemetry state across all subscribers
+   */
+  public async emitTelemetry(): Promise<void> {
+    try {
+      if (!this.database.isOpen()) {
+        await this.database.open();
+      }
+      const { pendingCount, failedCount, syncedCount } = await this.queue.getStats();
+      const isOnline = connectivityService.isOnline();
+
+      // Determine pending transactions count for human-friendly messaging
+      let displayTransactions = pendingCount;
+      try {
+        const pendingSales = await this.database.sales.where('sync_status').equals('pending').count();
+        if (pendingSales > 0) {
+          displayTransactions = pendingSales;
+        } else {
+          const saleQueueItems = await this.database.syncQueue
+            .where('entity_type')
+            .equals('sale')
+            .and(i => i.status === 'pending')
+            .count();
+          if (saleQueueItems > 0) {
+            displayTransactions = saleQueueItems;
+          }
+        }
+      } catch {
+        displayTransactions = pendingCount;
+      }
+
+      // Determine stage if not currently syncing or in active success hold
+      let stage = this.currentStage;
+      if (!this.isProcessing && stage !== 'sync_failed' && stage !== 'synchronized') {
+        if (!isOnline && pendingCount > 0) {
+          stage = 'offline_pending';
+        } else if (pendingCount > 0) {
+          stage = 'offline_pending';
+        } else {
+          stage = 'idle';
+        }
+      }
+
+      if (stage !== 'synchronized' && stage !== 'sync_failed') {
+        this.currentTelemetryMessage = this.generateStatusMessage(stage, displayTransactions);
+      }
+
+      const telemetry: SyncTelemetry = {
+        stage,
+        pendingCount: displayTransactions,
+        syncedCount,
+        failedCount,
+        retryCount: this.currentRetryCount,
+        nextRetrySeconds: this.nextRetrySeconds,
+        statusMessage: this.currentTelemetryMessage,
+        lastSyncedAt: this.lastSyncedAt,
+      };
+
+      this.telemetrySubscribers.forEach(cb => cb(telemetry));
+
+      // Also notify legacy subscribers
+      const stats: SyncStats = {
+        pendingCount,
+        syncedCount,
+        failedCount,
+        isSyncing: this.isProcessing,
+        lastSyncedAt: this.lastSyncedAt,
+      };
+      this.legacySubscribers.forEach(cb => cb(stats));
+    } catch {
+      // Database may be closed during test teardown
+      return;
+    }
+  }
+
+  public async emitStats(): Promise<void> {
+    return this.emitTelemetry();
+  }
+
+  /**
+   * Main synchronization loop implementing the authoritative 8-step pipeline:
+   * 1. Sale Created (IndexedDB)
+   * 2. Enqueued in sync_queue (idempotency key)
+   * 3. Internet available?
+   * 4. Validate payload
+   * 5. Send to Supabase
+   * 6. Server idempotency check
+   * 7. Commit confirmation
+   * 8. Mark SYNCHRONIZED
    */
   public async processQueue(): Promise<{ processed: number; errors: number }> {
     if (this.isProcessing) {
@@ -118,24 +298,47 @@ export class SyncEngine {
       await this.database.open();
     }
 
+    // Stage 3: Internet available?
     if (!connectivityService.isOnline()) {
+      this.currentStage = 'offline_pending';
+      await this.emitTelemetry();
+      return { processed: 0, errors: 0 };
+    }
+
+    const batch = await this.queue.getNextBatch(50);
+    if (batch.length === 0) {
+      this.currentStage = 'idle';
+      this.currentTelemetryMessage = 'All transactions synchronized';
+      await this.emitTelemetry();
       return { processed: 0, errors: 0 };
     }
 
     this.isProcessing = true;
+    this.currentStage = 'syncing';
     connectivityService.setSyncing(true);
-    await this.emitStats();
+
+    const saleCountInBatch = batch.filter(b => b.entity_type === 'sale').length;
+    const displayBatchCount = saleCountInBatch > 0 ? saleCountInBatch : batch.length;
+    this.currentTelemetryMessage = this.generateStatusMessage('syncing', displayBatchCount, 1, displayBatchCount);
+    await this.emitTelemetry();
 
     let processedCount = 0;
     let errorCount = 0;
 
     try {
-      const pendingItems = await this.queue.getNextBatch(50);
+      for (let i = 0; i < batch.length; i++) {
+        const item = batch[i];
 
-      for (const item of pendingItems) {
-        if (!connectivityService.isOnline()) break;
+        if (!connectivityService.isOnline()) {
+          this.currentStage = 'offline_pending';
+          break;
+        }
 
-        const success = await this.syncItem(item);
+        // Update real-time progress message
+        this.currentTelemetryMessage = this.generateStatusMessage('syncing', displayBatchCount, i + 1, displayBatchCount);
+        await this.emitTelemetry();
+
+        const success = await this.executePipelineForItem(item);
         if (success) {
           processedCount++;
         } else {
@@ -143,40 +346,64 @@ export class SyncEngine {
         }
       }
 
-      if (processedCount > 0) {
+      if (errorCount === 0 && processedCount > 0) {
+        // Stage 8: All transactions successfully synchronized
         this.lastSyncedAt = new Date().toISOString();
+        this.currentStage = 'synchronized';
+        this.currentTelemetryMessage = 'All transactions synchronized';
+        this.currentRetryCount = 0;
+        this.retrier.cancelScheduledRetry();
+
+        // Hold the "All transactions synchronized" confirmation for 4 seconds
+        if (this.synchronizedClearTimeout) clearTimeout(this.synchronizedClearTimeout);
+        this.synchronizedClearTimeout = setTimeout(async () => {
+          this.currentStage = 'idle';
+          await this.emitTelemetry();
+        }, 4000);
+      } else if (errorCount > 0) {
+        // Handle failure branch: retry_count + 1 -> wait backoff -> retry
+        this.handleFailureLoop(errorCount);
       }
     } catch (err) {
       logger.error('SyncEngine', 'Sync queue worker encountered error', err);
       connectivityService.setSyncError();
+      this.handleFailureLoop(1);
     } finally {
       this.isProcessing = false;
       connectivityService.setSyncing(false);
-      await this.emitStats();
+      await this.emitTelemetry();
     }
 
     return { processed: processedCount, errors: errorCount };
   }
 
   /**
-   * Sync a single item with idempotency and conflict resolution
+   * Stage 4-8: Pipeline execution for a single mutation item
    */
-  private async syncItem(item: SyncQueueItem): Promise<boolean> {
+  private async executePipelineForItem(item: SyncQueueItem): Promise<boolean> {
     try {
       await this.queue.markInProgress(item);
-      const payload = JSON.parse(item.payload);
 
+      // Stage 4: Validate payload integrity
+      const payload = JSON.parse(item.payload);
+      const validation = this.validatePayload(item, payload);
+      if (!validation.valid) {
+        throw new Error(`Validation failed: ${validation.error}`);
+      }
+
+      // Stage 5 & 6: Send to Supabase with server-side Idempotency check
       if (this.supabase) {
         await this.pushToSupabase(item, payload);
       } else {
-        // Offline / demo simulation mode: rapid delay to simulate transport
-        await new Promise(r => setTimeout(r, 5));
-        await this.markLocalRecordSynced(item);
+        // Simulation mode: rapid transport delay
+        await new Promise(r => setTimeout(r, 10));
       }
 
+      // Stage 7 & 8: Commit & Mark SYNCHRONIZED
+      await this.markLocalRecordSynced(item);
       await this.queue.markSuccess(item);
 
-      // Record audit log
+      // Audit Log
       await this.database.auditLogs.add({
         user_id: 'system-sync',
         action: 'SYNC_SUCCESS',
@@ -189,7 +416,7 @@ export class SyncEngine {
 
       return true;
     } catch (err: unknown) {
-      // Evaluate conflict resolution
+      // Stage 6 fallback: Check if conflict is already committed idempotently
       const resolution = this.resolver.resolveConflict(item, err);
       if (resolution.resolved && resolution.action === 'skip_duplicate') {
         logger.info('SyncEngine', `Conflict resolved by deduplication: ${resolution.details}`);
@@ -198,14 +425,55 @@ export class SyncEngine {
         return true;
       }
 
-      logger.warn('SyncEngine', `Sync failed for ${item.entity_type} ${item.entity_id}`, err);
+      logger.warn('SyncEngine', `Sync failed for ${item.entity_type} (${item.entity_id})`, err);
       await this.queue.markFailure(item, err);
       return false;
     }
   }
 
   /**
-   * Pushes payload to remote Supabase tables idempotently
+   * Stage 4: Validation helper
+   */
+  private validatePayload(item: SyncQueueItem, payload: any): { valid: boolean; error?: string } {
+    if (!payload) return { valid: false, error: 'Empty payload' };
+    if (!item.idempotency_key || item.idempotency_key.trim() === '') {
+      return { valid: false, error: 'Missing required idempotency key' };
+    }
+
+    if (item.entity_type === 'sale') {
+      const sale = payload?.sale || payload;
+      if (!sale || !sale.id) {
+        return { valid: false, error: 'Malformed sale payload: missing sale id' };
+      }
+    }
+    return { valid: true };
+  }
+
+  /**
+   * Failure loop: retry_count + 1 -> wait backoff -> retry
+   */
+  private handleFailureLoop(errorCount: number): void {
+    this.currentRetryCount += 1;
+    this.currentStage = 'sync_failed';
+
+    const backoffMs = this.retrier.calculateBackoff(this.currentRetryCount);
+    this.nextRetrySeconds = Math.round(backoffMs / 1000);
+    this.currentTelemetryMessage = `Sync paused (${errorCount} failed) — Retrying in ${this.nextRetrySeconds}s…`;
+
+    logger.warn(
+      'SyncEngine',
+      `Scheduling retry #${this.currentRetryCount} in ${this.nextRetrySeconds}s (${backoffMs}ms)`
+    );
+
+    this.retrier.scheduleRetry(async () => {
+      if (connectivityService.isOnline()) {
+        await this.processQueue();
+      }
+    }, backoffMs);
+  }
+
+  /**
+   * Stage 5: Pushes payload to remote Supabase tables idempotently
    */
   private async pushToSupabase(item: SyncQueueItem, payload: any): Promise<void> {
     if (!this.supabase) return;
@@ -231,11 +499,6 @@ export class SyncEngine {
             .upsert(payments, { onConflict: 'idempotency_key' });
           if (payError) throw payError;
         }
-
-        await this.database.sales.update(item.entity_id, {
-          sync_status: 'synced',
-          server_synced_at: new Date().toISOString(),
-        });
         break;
       }
 
@@ -245,10 +508,6 @@ export class SyncEngine {
           .from('products')
           .upsert(remoteProduct, { onConflict: 'id' });
         if (error) throw error;
-
-        await this.database.products.update(item.entity_id, {
-          sync_status: 'synced',
-        });
         break;
       }
 
@@ -258,10 +517,6 @@ export class SyncEngine {
           .from('categories')
           .upsert(remoteCategory, { onConflict: 'id' });
         if (error) throw error;
-
-        await this.database.categories.update(item.entity_id, {
-          sync_status: 'synced',
-        });
         break;
       }
 
@@ -270,10 +525,6 @@ export class SyncEngine {
           .from('inventory_movements')
           .upsert(payload, { onConflict: 'idempotency_key' });
         if (error) throw error;
-
-        await this.database.inventoryMovements.update(item.entity_id, {
-          sync_status: 'synced',
-        });
         break;
       }
 
@@ -282,10 +533,6 @@ export class SyncEngine {
           .from('shifts')
           .upsert(payload, { onConflict: 'idempotency_key' });
         if (error) throw error;
-
-        await this.database.shifts.update(item.entity_id, {
-          sync_status: 'synced',
-        });
         break;
       }
 
@@ -294,10 +541,6 @@ export class SyncEngine {
           .from('customers')
           .upsert(payload, { onConflict: 'id' });
         if (error) throw error;
-
-        await this.database.customers.update(item.entity_id, {
-          sync_status: 'synced',
-        });
         break;
       }
 
@@ -306,30 +549,28 @@ export class SyncEngine {
           .from('loyalty_transactions')
           .upsert(payload, { onConflict: 'idempotency_key' });
         if (error) throw error;
-
-        await this.database.loyaltyTransactions.update(item.entity_id, {
-          sync_status: 'synced',
-        });
         break;
       }
 
       case 'receipt': {
-        await this.database.receipts.update(item.entity_id, {
-          sync_status: 'synced',
-        });
+        const { error } = await this.supabase
+          .from('receipts')
+          .upsert(payload, { onConflict: 'id' });
+        if (error) throw error;
         break;
       }
     }
   }
 
   /**
-   * Updates local primary store record status to synced
+   * Stage 8: Updates local primary store record status to synced
    */
   private async markLocalRecordSynced(item: SyncQueueItem): Promise<void> {
+    const now = new Date().toISOString();
     if (item.entity_type === 'sale') {
       await this.database.sales.update(item.entity_id, {
         sync_status: 'synced',
-        server_synced_at: new Date().toISOString(),
+        server_synced_at: now,
       });
     } else if (item.entity_type === 'product') {
       await this.database.products.update(item.entity_id, { sync_status: 'synced' });
@@ -350,7 +591,6 @@ export class SyncEngine {
 
   /**
    * Pull updated product catalog & categories down from Supabase to IndexedDB
-   * Reconciles stock levels with pending un-synced local inventory movements.
    */
   public async pullUpdatesFromSupabase(): Promise<boolean> {
     if (!this.supabase || !connectivityService.isOnline()) {
@@ -374,7 +614,6 @@ export class SyncEngine {
         .eq('is_active', true);
 
       if (!prodError && products && products.length > 0) {
-        // Find any local pending inventory movements not yet pushed
         const pendingMovements = await this.database.inventoryMovements
           .where('sync_status')
           .equals('pending')
@@ -386,7 +625,6 @@ export class SyncEngine {
           pendingDeltasByProduct.set(mov.product_id, current + mov.quantity_delta);
         }
 
-        // Reconcile remote product stock with local pending deltas
         const reconciledProducts = products.map(p => {
           const localDelta = pendingDeltasByProduct.get(p.id) || 0;
           return {
@@ -406,11 +644,6 @@ export class SyncEngine {
     }
   }
 
-  /**
-   * Performs a complete bidirectional synchronization:
-   * 1. Pushes all pending local changes (sales, products, categories, stock) to Supabase
-   * 2. Pulls updated catalog from Supabase into IndexedDB
-   */
   public async syncCatalog(): Promise<{ pushed: number; errors: number; pulled: boolean }> {
     const pushResult = await this.processQueue();
     const pullSuccess = await this.pullUpdatesFromSupabase();
@@ -430,7 +663,17 @@ export class SyncEngine {
       this.unsubscribeConnectivity();
       this.unsubscribeConnectivity = null;
     }
-    this.subscribers.clear();
+    if (this.unsubscribeRetryCountdown) {
+      this.unsubscribeRetryCountdown();
+      this.unsubscribeRetryCountdown = null;
+    }
+    if (this.synchronizedClearTimeout) {
+      clearTimeout(this.synchronizedClearTimeout);
+      this.synchronizedClearTimeout = null;
+    }
+    this.retrier.cancelScheduledRetry();
+    this.legacySubscribers.clear();
+    this.telemetrySubscribers.clear();
   }
 }
 
