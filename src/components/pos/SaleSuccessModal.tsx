@@ -85,6 +85,44 @@ export const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({ onClose, onN
             </div>
           </div>
 
+          {/* Explicit Verification of Steps 13, 14, 15 */}
+          <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800 space-y-2 text-xs">
+            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+              ACID Transaction Verification
+            </span>
+            <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
+              <div className="bg-slate-900 p-2 rounded-lg border border-slate-800">
+                <span className="text-slate-400 block font-bold">13. INVENTORY</span>
+                <span className="text-emerald-400 font-bold block mt-0.5">
+                  {lastCompletedSaleResult.items.length} lines decremented
+                </span>
+                <span className="text-[9px] text-slate-500">Movements logged</span>
+              </div>
+
+              <div className="bg-slate-900 p-2 rounded-lg border border-slate-800">
+                <span className="text-slate-400 block font-bold">14. SALES REPORT</span>
+                <span className="text-sky-400 font-bold block mt-0.5">
+                  +{formatMoney(sale.total_amount)}
+                </span>
+                <span className="text-[9px] text-slate-500">Shift aggregates</span>
+              </div>
+
+              <div className="bg-slate-900 p-2 rounded-lg border border-slate-800">
+                <span className="text-slate-400 block font-bold">15. LOYALTY</span>
+                <span className="text-amber-400 font-bold block mt-0.5">
+                  {lastCompletedSaleResult.loyaltyTransaction
+                    ? `+${lastCompletedSaleResult.loyaltyTransaction.points_delta} pts`
+                    : 'Walk-in (0 pts)'}
+                </span>
+                <span className="text-[9px] text-slate-500">
+                  {lastCompletedSaleResult.newCustomerPoints !== undefined
+                    ? `Balance: ${lastCompletedSaleResult.newCustomerPoints}`
+                    : 'Guest checkout'}
+                </span>
+              </div>
+            </div>
+          </div>
+
           <div className="flex gap-2">
             <button
               onClick={() => printService.printReceipt()}
@@ -99,7 +137,7 @@ export const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({ onClose, onN
               onClick={onNextCustomer}
               className="w-2/3 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-xs transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2"
             >
-              <span>NEW SALE (STEP 17)</span>
+              <span>NEXT CUSTOMER (STEP 17)</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

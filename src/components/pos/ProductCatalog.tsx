@@ -238,9 +238,11 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ onProceedToRevie
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
             {/* YES -> Return to Scan Next Item (Step 5) */}
+            {/* YES -> Return to Scan Next Item (Step 5) */}
             <button
               onClick={() => {
                 setShowMoreProductsPrompt(false);
+                setActiveWorkflowStep(5);
                 searchInputRef.current?.focus();
               }}
               className="flex-1 sm:flex-initial px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-emerald-600/60 text-emerald-200 font-bold rounded-xl text-xs transition"
@@ -252,6 +254,7 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ onProceedToRevie
             <button
               onClick={() => {
                 setShowMoreProductsPrompt(false);
+                setActiveWorkflowStep(8);
                 onProceedToReviewCart();
               }}
               className="flex-1 sm:flex-initial px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-1.5"

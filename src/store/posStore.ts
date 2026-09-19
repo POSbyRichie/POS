@@ -249,10 +249,68 @@ class PosStore {
   }
 
   /**
+   * Authoritative Step 8: REVIEW CART
+   */
+  public proceedToReviewCart() {
+    this.setState({ activeWorkflowStep: 8, activeView: 'pos' });
+  }
+
+  /**
    * Authoritative Step 9: CUSTOMER Selection
    */
   public selectCustomer(customer: Customer | null) {
     this.setState({ selectedCustomer: customer });
+  }
+
+  public proceedToCustomer() {
+    this.setState({ activeWorkflowStep: 9, isCustomerModalOpen: true });
+  }
+
+  /**
+   * Authoritative Step 10: PAYMENT
+   */
+  public proceedToPayment() {
+    this.setState({ activeWorkflowStep: 10, isPaymentModalOpen: true });
+  }
+
+  /**
+   * Authoritative Step 12: RECEIPT
+   */
+  public proceedToReceipt(result: CompleteSaleResult) {
+    this.setState({
+      lastCompletedSaleResult: result,
+      activeWorkflowStep: 12,
+      isPaymentModalOpen: false,
+      isReceiptModalOpen: true,
+    });
+  }
+
+  /**
+   * Authoritative Step 16: SALE COMPLETED
+   */
+  public proceedToSaleCompleted() {
+    this.setState({
+      activeWorkflowStep: 16,
+      isReceiptModalOpen: false,
+    });
+  }
+
+  /**
+   * Authoritative Step 17: NEXT CUSTOMER
+   * Clears transaction and restarts at Step 4 (New Sale)
+   */
+  public proceedToNextCustomer() {
+    this.startNewSale();
+  }
+
+  /**
+   * Authoritative Step 18: CLOSE SHIFT
+   */
+  public openCloseShiftModal() {
+    this.setState({
+      activeWorkflowStep: 18,
+      isClosingShiftOpen: true,
+    });
   }
 
   public logout() {
@@ -289,11 +347,19 @@ export function usePos() {
     updateCartItemMeta: (id: string, disc: number, note?: string) => posStore.updateCartItemMeta(id, disc, note),
     setCartDiscount: (percent: number, fixed: number) => posStore.setCartDiscount(percent, fixed),
     selectCustomer: (cust: Customer | null) => posStore.selectCustomer(cust),
+    proceedToReviewCart: () => posStore.proceedToReviewCart(),
+    proceedToCustomer: () => posStore.proceedToCustomer(),
+    proceedToPayment: () => posStore.proceedToPayment(),
+    proceedToReceipt: (result: CompleteSaleResult) => posStore.proceedToReceipt(result),
+    proceedToSaleCompleted: () => posStore.proceedToSaleCompleted(),
+    proceedToNextCustomer: () => posStore.proceedToNextCustomer(),
+    openCloseShiftModal: () => posStore.openCloseShiftModal(),
     setCurrentUser: (user: User | null) => posStore.setState({ currentUser: user }),
     setActiveShift: (shift: Shift | null) => posStore.setState({ activeShift: shift }),
     setActiveRegister: (register: Register | null) => posStore.setState({ activeRegister: register }),
     setActiveDevice: (device: Device | null) => posStore.setState({ activeDevice: device }),
-    setActiveWorkflowStep: (step: number) => posStore.setState({ activeWorkflowStep: step }),
+    setActiveWorkflowStep: (step: number) =>
+      posStore.setState({ activeWorkflowStep: Math.max(1, Math.min(18, Math.round(step))) }),
     setActiveView: (view: PosState['activeView']) => posStore.setState({ activeView: view }),
     setOpeningShiftOpen: (open: boolean) => posStore.setState({ isOpeningShiftOpen: open }),
     setClosingShiftOpen: (open: boolean) => posStore.setState({ isClosingShiftOpen: open }),

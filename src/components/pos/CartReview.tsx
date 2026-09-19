@@ -200,10 +200,13 @@ export const CartReview: React.FC<CartReviewProps> = ({
         </div>
 
         <button
-          onClick={onOpenCustomerModal}
+          onClick={() => {
+            setActiveWorkflowStep(9);
+            onOpenCustomerModal();
+          }}
           className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-sky-400 font-semibold rounded-lg text-[11px] transition border border-slate-700"
         >
-          {selectedCustomer ? 'Change Customer' : '+ Select / Add Customer'}
+          {selectedCustomer ? 'Change Customer (Step 9)' : '+ Select / Add Customer (Step 9)'}
         </button>
       </div>
 

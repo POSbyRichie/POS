@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { Header } from './Header';
+import { WorkflowStepper } from './WorkflowStepper';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 
 interface AppLayoutProps {
@@ -13,6 +14,7 @@ export function AppLayout({ children, onOpenSyncModal }: AppLayoutProps) {
       <div className="min-h-screen bg-slate-950 flex flex-col text-slate-100 selection:bg-sky-500 selection:text-white">
         <Header onOpenSyncModal={onOpenSyncModal} />
         <main className="flex-1 p-4 overflow-hidden flex flex-col">
+          <WorkflowStepper />
           {children}
         </main>
       </div>

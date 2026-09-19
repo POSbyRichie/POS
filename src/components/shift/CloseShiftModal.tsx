@@ -9,11 +9,15 @@ interface CloseShiftModalProps {
 }
 
 export const CloseShiftModal: React.FC<CloseShiftModalProps> = ({ onClose }) => {
-  const { activeShift, currentUser, setActiveShift, logout } = usePos();
+  const { activeShift, currentUser, setActiveShift, setActiveWorkflowStep, logout } = usePos();
   const [actualCashStr, setActualCashStr] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+
+  React.useEffect(() => {
+    setActiveWorkflowStep(18);
+  }, [setActiveWorkflowStep]);
 
   if (!activeShift) return null;
 

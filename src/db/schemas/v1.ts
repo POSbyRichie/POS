@@ -13,7 +13,7 @@ export const schemaV1 = {
   categories: 'id, slug, sync_status',
   products: 'id, sku, barcode, name, category_id, is_active, sync_status',
   inventory: 'id, store_id, product_id, [store_id+product_id]',
-  inventoryMovements: 'id, idempotency_key, product_id, register_id, shift_id, type, timestamp, sync_status',
+  inventoryMovements: 'id, idempotency_key, product_id, register_id, shift_id, reference_id, type, timestamp, sync_status',
   shifts: 'id, idempotency_key, register_id, cashier_id, status, opened_at, sync_status',
   sales: 'id, idempotency_key, receipt_number, shift_id, register_id, cashier_id, customer_id, sync_status, created_at',
   saleItems: 'id, sale_id, product_id, sku',

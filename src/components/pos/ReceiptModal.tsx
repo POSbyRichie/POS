@@ -138,7 +138,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ onClose, onProceedTo
               onClick={onProceedToCompleted}
               className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-xs transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2"
             >
-              <span>SALE COMPLETED &amp; NEXT CUSTOMER (STEP 16)</span>
+              <span>CONFIRM SALE COMPLETED (STEP 16)</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

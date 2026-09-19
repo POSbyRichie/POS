@@ -31,11 +31,15 @@ export function App() {
     isPaymentModalOpen,
     isReceiptModalOpen,
     isCustomerModalOpen,
+    setActiveWorkflowStep,
+    proceedToReviewCart,
+    proceedToCustomer,
+    proceedToPayment,
+    proceedToNextCustomer,
     setClosingShiftOpen,
     setPaymentModalOpen,
     setReceiptModalOpen,
     setCustomerModalOpen,
-    startNewSale,
   } = usePos();
 
   const { navigate } = useRouter();
@@ -73,7 +77,7 @@ export function App() {
 
   return (
     <AppLayout onOpenSyncModal={() => setIsSyncModalOpen(true)}>
-      {/* Route: Home / Dashboard */}
+      {/* Route: Home / Dashboard (Step 3) */}
       <Route path="/">
         <div className="flex-1 overflow-y-auto pr-1">
           <Dashboard onOpenSyncModal={() => setIsSyncModalOpen(true)} />
@@ -90,12 +94,12 @@ export function App() {
       <Route path="/pos">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 h-[calc(100vh-6.5rem)]">
           <div className="lg:col-span-8 flex flex-col h-full overflow-hidden">
-            <ProductCatalog onProceedToReviewCart={() => setPaymentModalOpen(true)} />
+            <ProductCatalog onProceedToReviewCart={() => proceedToReviewCart()} />
           </div>
           <div className="lg:col-span-4 flex flex-col h-full overflow-hidden">
             <CartReview
-              onProceedToPayment={() => setPaymentModalOpen(true)}
-              onOpenCustomerModal={() => setCustomerModalOpen(true)}
+              onProceedToPayment={() => proceedToPayment()}
+              onOpenCustomerModal={() => proceedToCustomer()}
             />
           </div>
         </div>
@@ -123,27 +127,49 @@ export function App() {
       </Route>
 
       {/* Overlays & Modals */}
-      {isClosingShiftOpen && <CloseShiftModal onClose={() => setClosingShiftOpen(false)} />}
-      {isCustomerModalOpen && <CustomerSelector onClose={() => setCustomerModalOpen(false)} />}
+      {isClosingShiftOpen && (
+        <CloseShiftModal
+          onClose={() => {
+            setClosingShiftOpen(false);
+            setActiveWorkflowStep(3);
+          }}
+        />
+      )}
+      {isCustomerModalOpen && (
+        <CustomerSelector
+          onClose={() => {
+            setCustomerModalOpen(false);
+            setActiveWorkflowStep(8);
+          }}
+        />
+      )}
       <ProductNotFoundModal />
       <StockAlertModal />
 
       {isPaymentModalOpen && (
         <PaymentModal
-          onClose={() => setPaymentModalOpen(false)}
+          onClose={() => {
+            setPaymentModalOpen(false);
+            setActiveWorkflowStep(8);
+          }}
           onPaymentSuccess={() => {
             setPaymentModalOpen(false);
             setReceiptModalOpen(true);
+            setActiveWorkflowStep(12);
           }}
         />
       )}
 
       {isReceiptModalOpen && (
         <ReceiptModal
-          onClose={() => setReceiptModalOpen(false)}
+          onClose={() => {
+            setReceiptModalOpen(false);
+            setActiveWorkflowStep(8);
+          }}
           onProceedToCompleted={() => {
             setReceiptModalOpen(false);
             setIsSuccessModalOpen(true);
+            setActiveWorkflowStep(16);
           }}
         />
       )}
@@ -153,7 +179,7 @@ export function App() {
           onClose={() => setIsSuccessModalOpen(false)}
           onNextCustomer={() => {
             setIsSuccessModalOpen(false);
-            startNewSale();
+            proceedToNextCustomer();
             navigate('/pos');
           }}
         />
