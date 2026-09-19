@@ -33,6 +33,7 @@ export class SyncEngine {
   private currentRetryCount: number = 0;
   private nextRetrySeconds: number = 0;
   private synchronizedClearTimeout: ReturnType<typeof setTimeout> | null = null;
+  private activeProcessingPromise: Promise<{ processed: number; errors: number }> | null = null;
 
   constructor(
     private readonly database: PosDatabase = db,
@@ -42,18 +43,21 @@ export class SyncEngine {
   ) {
     this.initSupabase();
 
-    // Listen to network status changes (transition from offline to online)
-    let prevOnline = connectivityService.isOnline();
-    this.unsubscribeConnectivity = connectivityService.subscribe(() => {
-      const isOnline = connectivityService.isOnline();
-      if (isOnline && !prevOnline) {
-        this.retrier.cancelScheduledRetry();
-        this.processQueue();
-      } else if (!isOnline) {
-        this.emitTelemetry();
-      }
-      prevOnline = isOnline;
-    });
+    const isTestEnv = typeof process !== 'undefined' && (process.env.NODE_ENV === 'test' || process.env.VITEST);
+    if (!isTestEnv || this.database !== db) {
+      // Listen to network status changes (transition from offline to online)
+      let prevOnline = connectivityService.isOnline();
+      this.unsubscribeConnectivity = connectivityService.subscribe(() => {
+        const isOnline = connectivityService.isOnline();
+        if (isOnline && !prevOnline) {
+          this.retrier.cancelScheduledRetry();
+          this.processQueue();
+        } else if (!isOnline) {
+          this.emitTelemetry();
+        }
+        prevOnline = isOnline;
+      });
+    }
 
     // Listen to retry countdown ticks
     this.unsubscribeRetryCountdown = this.retrier.subscribeCountdown(seconds => {
@@ -65,7 +69,7 @@ export class SyncEngine {
     });
 
     // Periodic auto-sync interval when online (every 30s)
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !isTestEnv) {
       this.syncIntervalId = setInterval(() => {
         if (connectivityService.isOnline() && !this.isProcessing) {
           this.processQueue();
@@ -105,6 +109,29 @@ export class SyncEngine {
 
   public isCloudConnected(): boolean {
     return this.supabase !== null && connectivityService.isOnline();
+  }
+
+  public destroy(): void {
+    if (this.syncIntervalId) {
+      clearInterval(this.syncIntervalId);
+      this.syncIntervalId = null;
+    }
+    if (this.unsubscribeConnectivity) {
+      this.unsubscribeConnectivity();
+      this.unsubscribeConnectivity = null;
+    }
+    if (this.unsubscribeRetryCountdown) {
+      this.unsubscribeRetryCountdown();
+      this.unsubscribeRetryCountdown = null;
+    }
+    if (this.synchronizedClearTimeout) {
+      clearTimeout(this.synchronizedClearTimeout);
+      this.synchronizedClearTimeout = null;
+    }
+    this.retrier.cancelScheduledRetry();
+    this.telemetrySubscribers.clear();
+    this.legacySubscribers.clear();
+    this.activeProcessingPromise = null;
   }
 
   /**
@@ -290,12 +317,24 @@ export class SyncEngine {
    * 8. Mark SYNCHRONIZED
    */
   public async processQueue(): Promise<{ processed: number; errors: number }> {
-    if (this.isProcessing) {
-      return { processed: 0, errors: 0 };
+    if (this.activeProcessingPromise) {
+      return this.activeProcessingPromise;
     }
+    this.activeProcessingPromise = this.doProcessQueue();
+    try {
+      return await this.activeProcessingPromise;
+    } finally {
+      this.activeProcessingPromise = null;
+    }
+  }
 
+  private async doProcessQueue(): Promise<{ processed: number; errors: number }> {
     if (!this.database.isOpen()) {
-      await this.database.open();
+      try {
+        await this.database.open();
+      } catch {
+        return { processed: 0, errors: 0 };
+      }
     }
 
     // Stage 3: Internet available?
@@ -305,8 +344,8 @@ export class SyncEngine {
       return { processed: 0, errors: 0 };
     }
 
-    const batch = await this.queue.getNextBatch(50);
-    if (batch.length === 0) {
+    const initialBatch = await this.queue.getNextBatch(50);
+    if (initialBatch.length === 0) {
       this.currentStage = 'idle';
       this.currentTelemetryMessage = 'All transactions synchronized';
       await this.emitTelemetry();
@@ -317,36 +356,57 @@ export class SyncEngine {
     this.currentStage = 'syncing';
     connectivityService.setSyncing(true);
 
-    const saleCountInBatch = batch.filter(b => b.entity_type === 'sale').length;
-    const displayBatchCount = saleCountInBatch > 0 ? saleCountInBatch : batch.length;
-    this.currentTelemetryMessage = this.generateStatusMessage('syncing', displayBatchCount, 1, displayBatchCount);
-    await this.emitTelemetry();
-
-    let processedCount = 0;
-    let errorCount = 0;
+    let totalProcessed = 0;
+    let totalErrors = 0;
 
     try {
-      for (let i = 0; i < batch.length; i++) {
-        const item = batch[i];
+      let currentBatch = initialBatch;
 
-        if (!connectivityService.isOnline()) {
-          this.currentStage = 'offline_pending';
+      while (currentBatch.length > 0 && connectivityService.isOnline()) {
+        const saleCountInBatch = currentBatch.filter(b => b.entity_type === 'sale').length;
+        const displayBatchCount = saleCountInBatch > 0 ? saleCountInBatch : currentBatch.length;
+        this.currentTelemetryMessage = this.generateStatusMessage('syncing', displayBatchCount, 1, displayBatchCount);
+        await this.emitTelemetry();
+
+        for (let i = 0; i < currentBatch.length; i++) {
+          const item = currentBatch[i];
+
+          if (!connectivityService.isOnline()) {
+            this.currentStage = 'offline_pending';
+            break;
+          }
+
+          // Update real-time progress message
+          this.currentTelemetryMessage = this.generateStatusMessage('syncing', displayBatchCount, i + 1, displayBatchCount);
+          await this.emitTelemetry();
+
+          const success = await this.executePipelineForItem(item);
+          if (success) {
+            totalProcessed++;
+          } else {
+            totalErrors++;
+          }
+        }
+
+        if (totalErrors > 0 || !connectivityService.isOnline()) {
           break;
         }
 
-        // Update real-time progress message
-        this.currentTelemetryMessage = this.generateStatusMessage('syncing', displayBatchCount, i + 1, displayBatchCount);
-        await this.emitTelemetry();
-
-        const success = await this.executePipelineForItem(item);
-        if (success) {
-          processedCount++;
-        } else {
-          errorCount++;
-        }
+        // Retrieve next batch until queue is completely drained
+        currentBatch = await this.queue.getNextBatch(50);
       }
 
-      if (errorCount === 0 && processedCount > 0) {
+      let remainingPending = 0;
+      try {
+        remainingPending = await this.database.syncQueue
+          .where('status')
+          .equals('pending')
+          .count();
+      } catch {
+        remainingPending = 0;
+      }
+
+      if (totalErrors === 0 && totalProcessed > 0 && remainingPending === 0) {
         // Stage 8: All transactions successfully synchronized
         this.lastSyncedAt = new Date().toISOString();
         this.currentStage = 'synchronized';
@@ -360,9 +420,9 @@ export class SyncEngine {
           this.currentStage = 'idle';
           await this.emitTelemetry();
         }, 4000);
-      } else if (errorCount > 0) {
+      } else if (totalErrors > 0) {
         // Handle failure branch: retry_count + 1 -> wait backoff -> retry
-        this.handleFailureLoop(errorCount);
+        this.handleFailureLoop(totalErrors);
       }
     } catch (err) {
       logger.error('SyncEngine', 'Sync queue worker encountered error', err);
@@ -374,7 +434,7 @@ export class SyncEngine {
       await this.emitTelemetry();
     }
 
-    return { processed: processedCount, errors: errorCount };
+    return { processed: totalProcessed, errors: totalErrors };
   }
 
   /**
@@ -396,7 +456,7 @@ export class SyncEngine {
         await this.pushToSupabase(item, payload);
       } else {
         // Simulation mode: rapid transport delay
-        await new Promise(r => setTimeout(r, 10));
+        await new Promise(r => setTimeout(r, 2));
       }
 
       // Stage 7 & 8: Commit & Mark SYNCHRONIZED
@@ -652,28 +712,6 @@ export class SyncEngine {
       errors: pushResult.errors,
       pulled: pullSuccess,
     };
-  }
-
-  public destroy(): void {
-    if (this.syncIntervalId) {
-      clearInterval(this.syncIntervalId);
-      this.syncIntervalId = null;
-    }
-    if (this.unsubscribeConnectivity) {
-      this.unsubscribeConnectivity();
-      this.unsubscribeConnectivity = null;
-    }
-    if (this.unsubscribeRetryCountdown) {
-      this.unsubscribeRetryCountdown();
-      this.unsubscribeRetryCountdown = null;
-    }
-    if (this.synchronizedClearTimeout) {
-      clearTimeout(this.synchronizedClearTimeout);
-      this.synchronizedClearTimeout = null;
-    }
-    this.retrier.cancelScheduledRetry();
-    this.legacySubscribers.clear();
-    this.telemetrySubscribers.clear();
   }
 }
 

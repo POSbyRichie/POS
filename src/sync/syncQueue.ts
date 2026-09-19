@@ -44,6 +44,15 @@ export class SyncQueue {
    * Retrieves pending sync queue items sorted by FIFO order
    */
   async getNextBatch(batchSize = 50): Promise<SyncQueueItem[]> {
+    try {
+      await this.database.syncQueue
+        .where('status')
+        .equals('in_progress')
+        .modify({ status: 'pending' });
+    } catch {
+      // safe fallback
+    }
+
     return this.database.syncQueue
       .where('status')
       .equals('pending')

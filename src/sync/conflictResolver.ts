@@ -1,4 +1,5 @@
-import { SyncQueueItem } from '../types';
+import { SyncQueueItem, InventoryMovement } from '../types';
+import { inventoryReconciliationEngine } from './inventoryReconciliation';
 
 export type ConflictResolutionAction = 'skip_duplicate' | 'apply_delta' | 'server_wins' | 'client_wins' | 'dead_letter';
 
@@ -71,6 +72,17 @@ export class ConflictResolver {
    */
   mergeLoyaltyPoints(currentPoints: number, earnedPoints: number): number {
     return Math.max(0, currentPoints + earnedPoints);
+  }
+
+  /**
+   * Reconciles inventory movements from multiple offline terminals, detecting oversells
+   */
+  reconcileOfflineInventory(
+    product: { id: string; name: string; sku: string },
+    initialStock: number,
+    movements: InventoryMovement[]
+  ) {
+    return inventoryReconciliationEngine.reconcileProductMovements(product, initialStock, movements);
   }
 }
 

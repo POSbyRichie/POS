@@ -430,3 +430,30 @@ export interface LoyaltyAccount {
 
 export type { SyncTelemetry, SyncStage } from '../sync/types';
 
+export interface InventoryConflict {
+  id: string; // UUID
+  product_id: string;
+  product_name: string;
+  sku: string;
+  initial_stock: number;
+  total_sold: number;
+  reconciled_stock: number; // e.g. -3
+  deficit_quantity: number; // e.g. 3
+  contributing_registers: string[];
+  contributing_movement_ids: string[];
+  status: 'detected' | 'acknowledged' | 'resolved';
+  detected_at: string;
+  resolution_strategy: 'ALLOW_NEGATIVE_AND_ALERT' | 'BACKORDER_AND_RESTOCK';
+  resolution_notes?: string;
+}
+
+export interface InventoryReconciliationResult {
+  productId: string;
+  productName: string;
+  sku: string;
+  initialStock: number;
+  totalDelta: number;
+  reconciledStock: number;
+  hasConflict: boolean;
+  conflict?: InventoryConflict;
+}
