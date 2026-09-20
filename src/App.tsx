@@ -65,10 +65,24 @@ export function App() {
 
   if (!isInitialized) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-300">
-        <div className="w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-sm font-bold">Initializing Antigravity POS Architecture...</p>
-        <p className="text-xs text-slate-500 mt-1">Authoritative Modular Hierarchy &bull; Verifying local database</p>
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-300 p-4">
+        <div className="relative mb-4">
+          <img
+            src="/logo-icon.png"
+            alt="RichiePOS Logo"
+            className="w-16 h-16 rounded-2xl object-contain shadow-2xl shadow-amber-500/20 border border-slate-800 bg-slate-900 p-1"
+          />
+          <div className="absolute -inset-1 rounded-2xl border-2 border-amber-500/30 border-t-amber-400 animate-spin" />
+        </div>
+        <h2 className="text-base font-black text-white flex items-center gap-1">
+          <span>Richie</span>
+          <span className="text-amber-400">POS</span>
+          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-950 text-amber-300 border border-amber-800 font-bold ml-1">
+            SUIT
+          </span>
+        </h2>
+        <p className="text-xs text-slate-400 mt-1">Smart POS &bull; Growing Businesses</p>
+        <p className="text-[11px] text-slate-500 font-mono mt-3">Verifying local-first database...</p>
       </div>
     );
   }

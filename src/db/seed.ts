@@ -10,9 +10,9 @@ export async function seedDatabase(force: boolean = false) {
     if (storeCount === 0) {
       await db.stores.put({
         id: '00000000-0000-0000-0000-000000000001',
-        name: 'Kampala Flagship Store',
+        name: 'RichiePOS Flagship Store',
         code: 'KLA-01',
-        tagline: 'Enterprise Point of Sale',
+        tagline: 'Smart POS. Growing Businesses.',
         address: 'Plot 12 Kampala Road, Kampala, Uganda',
         phone: '+256 700 000000',
         email: 'info@posbyrichie.online',
@@ -51,9 +51,9 @@ export async function seedDatabase(force: boolean = false) {
   // 0. Seed Store
   const defaultStore: Store = {
     id: '00000000-0000-0000-0000-000000000001',
-    name: 'Kampala Flagship Store',
+    name: 'RichiePOS Flagship Store',
     code: 'KLA-01',
-    tagline: 'Enterprise Point of Sale',
+    tagline: 'Smart POS. Growing Businesses.',
     address: 'Plot 12 Kampala Road, Kampala, Uganda',
     phone: '+256 700 000000',
     email: 'info@posbyrichie.online',

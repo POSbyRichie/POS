@@ -9,11 +9,11 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.ico', 'favicon.png', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'logo.png', 'logo-icon.png'],
       manifest: {
-        name: 'Antigravity Enterprise POS',
-        short_name: 'AntigravityPOS',
-        description: 'Offline-First Professional Point of Sale System',
+        name: 'RichiePOS Enterprise',
+        short_name: 'RichiePOS',
+        description: 'RichiePOS Suit - Smart POS for Growing Businesses',
         theme_color: '#0f172a',
         background_color: '#0f172a',
         display: 'standalone',

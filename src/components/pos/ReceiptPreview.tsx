@@ -118,7 +118,12 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({
         )}
 
         {/* Store Header */}
-        <div className="text-center pb-3 border-b border-dashed border-slate-400">
+        <div className="text-center pb-3 border-b border-dashed border-slate-400 flex flex-col items-center">
+          <img
+            src="/logo-icon.png"
+            alt="RichiePOS"
+            className="w-10 h-10 object-contain mb-1.5 rounded-lg border border-slate-300"
+          />
           <h4 className="font-extrabold text-sm uppercase tracking-wide text-slate-900">{storeInfo.name}</h4>
           <p className="text-[10px] text-slate-600">{storeInfo.tagline}</p>
           <p className="text-[10px] text-slate-600 mt-0.5">{storeInfo.address}</p>

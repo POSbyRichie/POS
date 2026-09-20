@@ -1,12 +1,12 @@
 import { CartItem, StoreInfo } from '../types';
 
 export const DEFAULT_STORE_INFO: StoreInfo = {
-  name: 'Antigravity Enterprise POS',
-  tagline: 'Reliable Offline-First Retail Solutions',
-  address: 'Plot 42 Kampala Road, Suite 100, Kampala, Uganda',
-  phone: '+256 700 123 456',
-  email: 'support@antigravitypos.io',
-  tax_id: 'TIN-987654321',
+  name: 'RichiePOS Flagship Store',
+  tagline: 'Smart POS. Growing Businesses.',
+  address: 'Plot 12 Kampala Road, Kampala, Uganda',
+  phone: '+256 700 000 000',
+  email: 'info@posbyrichie.online',
+  tax_id: 'TAX-UG-100200',
   currency_code: 'UGX',
   currency_symbol: 'UGX',
   currency_decimals: 0, // UGX operates on whole integer shillings

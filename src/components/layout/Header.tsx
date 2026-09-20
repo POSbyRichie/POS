@@ -1,5 +1,4 @@
 import {
-  Zap,
   ShoppingCart,
   LayoutDashboard,
   Package,
@@ -45,15 +44,22 @@ export function Header({ onOpenSyncModal }: HeaderProps) {
   return (
     <header className="h-14 sm:h-16 bg-slate-900 border-b border-slate-800 px-2 sm:px-4 flex items-center justify-between shadow-md shrink-0 gap-2">
       {/* Brand */}
-      <div className="flex items-center gap-3 cursor-pointer shrink-0" onClick={() => navigate('/dashboard')}>
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-600 to-emerald-500 flex items-center justify-center font-black text-slate-950 shadow-md shadow-sky-500/20">
-          <Zap className="w-5 h-5 fill-slate-950" />
+      <div className="flex items-center gap-2.5 sm:gap-3 cursor-pointer shrink-0" onClick={() => navigate('/dashboard')}>
+        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shadow-md shadow-amber-500/10 border border-slate-700/80 bg-slate-950 flex items-center justify-center p-0.5">
+          <img
+            src="/logo-icon.png"
+            alt="RichiePOS Logo"
+            className="w-full h-full object-contain rounded-lg"
+          />
         </div>
         <div className="hidden lg:block">
-          <h1 className="text-sm font-extrabold text-white tracking-wide flex items-center gap-2">
-            ANTIGRAVITY POS
-            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-950 text-sky-400 border border-sky-800">
-              PRO
+          <h1 className="text-sm font-black text-white tracking-tight flex items-center gap-1.5">
+            <span className="text-white font-extrabold">Richie</span>
+            <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 bg-clip-text text-transparent font-black">
+              POS
+            </span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 border border-amber-800/80 font-bold">
+              SUIT
             </span>
           </h1>
           <p className="text-[11px] text-slate-400 font-mono">

@@ -67,7 +67,21 @@ export const NavigationDock: React.FC<NavigationDockProps> = ({ onOpenSyncModal 
     <>
       <aside className="hidden md:flex w-16 bg-slate-950 border-r border-slate-900 flex-col items-center justify-between py-3 shrink-0 select-none z-30">
       {/* Top Controls */}
-      <div className="flex flex-col items-center gap-4 w-full">
+      <div className="flex flex-col items-center gap-3.5 w-full">
+        {/* Brand Logo */}
+        <button
+          type="button"
+          onClick={() => navigate('/dashboard')}
+          title="RichiePOS Dashboard"
+          className="w-10 h-10 rounded-2xl overflow-hidden shadow-lg shadow-amber-500/10 border border-slate-800/80 bg-slate-900 flex items-center justify-center p-1 transition hover:scale-105 active:scale-95 group"
+        >
+          <img
+            src="/logo-icon.png"
+            alt="RichiePOS"
+            className="w-full h-full object-contain rounded-xl"
+          />
+        </button>
+
         {/* 1. Network / Online Indicator */}
         <button
           type="button"

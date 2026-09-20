@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, KeyRound, Shield, AlertCircle, AlertTriangle, Wifi, WifiOff, Terminal } from 'lucide-react';
+import { Lock, KeyRound, AlertCircle, AlertTriangle, Wifi, WifiOff, Terminal } from 'lucide-react';
 import { db } from '../../db';
 import { User, Register } from '../../types';
 import { usePos } from '../../store/posStore';
@@ -159,28 +159,38 @@ export const LoginModal: React.FC = () => {
         {/* Left Column: Device Status, User Selection & Register */}
         <div className="w-full md:w-5/12 bg-slate-950/70 p-4 sm:p-6 border-b md:border-b-0 md:border-r border-slate-800 flex flex-col justify-between overflow-y-auto">
           <div>
-            {/* Header & Connectivity Badge */}
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2 text-sky-400 font-bold text-base">
-                <Shield className="w-4 h-4 text-sky-400" />
-                <span>POS LOGIN</span>
+            {/* Brand Logo & Header */}
+            <div className="flex items-center gap-3 mb-3 pb-3 border-b border-slate-800/80">
+              <img
+                src="/logo-icon.png"
+                alt="RichiePOS Logo"
+                className="w-12 h-12 rounded-xl object-contain shadow-lg shadow-amber-500/10 border border-slate-800 bg-slate-950 p-0.5 shrink-0"
+              />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-black text-white tracking-tight flex items-center gap-1">
+                    <span>Richie</span>
+                    <span className="text-amber-400 font-extrabold">POS</span>
+                    <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-950 text-amber-300 border border-amber-800/60 font-bold ml-0.5">
+                      SUIT
+                    </span>
+                  </h2>
+                  <span
+                    className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      isOnline
+                        ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
+                        : 'bg-amber-950 text-amber-400 border border-amber-800'
+                    }`}
+                  >
+                    {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+                    {isOnline ? 'Online' : 'Offline'}
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-400 font-mono truncate mt-0.5">
+                  Smart POS &bull; Growing Businesses
+                </p>
               </div>
-              <span
-                className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  isOnline
-                    ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                    : 'bg-amber-950 text-amber-400 border border-amber-800'
-                }`}
-              >
-                {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-                {isOnline ? 'Online' : 'Offline'}
-              </span>
             </div>
-            <p className="text-[11px] text-slate-400 mb-4">
-              {isOnline
-                ? 'Online verification & offline credential caching enabled'
-                : 'Offline mode: Authorized cached staff only'}
-            </p>
 
             {/* Register Selection */}
             <div className="mb-4">

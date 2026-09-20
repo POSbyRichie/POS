@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Terminal, ShieldCheck, AlertTriangle, CheckCircle, Wifi, WifiOff, Zap } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, CheckCircle, Wifi, WifiOff, Zap } from 'lucide-react';
 import { db } from '../../db';
 import { Register, Store } from '../../types';
 import { deviceService } from '../../services/deviceService';
@@ -138,11 +138,24 @@ export const DeviceEnrollmentModal: React.FC<DeviceEnrollmentModalProps> = ({ on
     <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
       <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="p-4 sm:p-6 bg-gradient-to-r from-sky-950/80 to-slate-900 border-b border-slate-800 shrink-0">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2 text-sky-400 font-bold text-xs sm:text-sm">
-              <Terminal className="w-5 h-5 text-sky-400" />
-              <span>TERMINAL HARDWARE ENROLLMENT</span>
+        <div className="p-4 sm:p-6 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-b border-slate-800 shrink-0">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2.5">
+              <img
+                src="/logo-icon.png"
+                alt="RichiePOS Logo"
+                className="w-9 h-9 rounded-xl object-contain shadow-md shadow-amber-500/10 border border-slate-800 bg-slate-950 p-0.5"
+              />
+              <div>
+                <h4 className="text-xs font-black text-white flex items-center gap-1">
+                  <span>Richie</span>
+                  <span className="text-amber-400">POS</span>
+                  <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-950 text-amber-300 border border-amber-800/60 font-bold ml-0.5">
+                    SUIT
+                  </span>
+                </h4>
+                <p className="text-[10px] text-slate-400 font-mono">Terminal Enrollment</p>
+              </div>
             </div>
             <span
               className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
@@ -155,7 +168,7 @@ export const DeviceEnrollmentModal: React.FC<DeviceEnrollmentModalProps> = ({ on
               {isOnline ? 'Online Ready' : 'Offline Mode'}
             </span>
           </div>
-          <h3 className="text-lg sm:text-xl font-black text-white">POS Terminal Setup</h3>
+          <h3 className="text-lg sm:text-xl font-black text-white">Register Hardware Pairing</h3>
           <p className="text-xs text-slate-400 mt-1">
             Pair this hardware device with a physical register to enable local-first POS operations.
           </p>
