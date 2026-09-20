@@ -6,6 +6,16 @@ import { CompleteSaleResult } from '../services/saleService';
 import { db } from '../db';
 import { deviceService } from '../services/deviceService';
 
+export interface SuspendedSale {
+  id: string;
+  customer: Customer | null;
+  cartItems: CartItem[];
+  cartDiscountPercent: number;
+  cartDiscountFixed: number;
+  created_at: string;
+  notes?: string;
+}
+
 export interface PosState {
   currentUser: User | null;
   activeShift: Shift | null;
@@ -39,6 +49,10 @@ export interface PosState {
   isProductNotFoundOpen: boolean;
   stockAlertMessage: string;
   searchedNotFoundTerm: string;
+  suspendedSales: SuspendedSale[];
+  isSuspendedSalesOpen: boolean;
+  isCalculatorOpen: boolean;
+  isIssueLoyaltyCardOpen: boolean;
 }
 
 type PosStoreListener = (state: PosState) => void;
@@ -66,6 +80,10 @@ class PosStore {
     isProductNotFoundOpen: false,
     stockAlertMessage: '',
     searchedNotFoundTerm: '',
+    suspendedSales: [],
+    isSuspendedSalesOpen: false,
+    isCalculatorOpen: false,
+    isIssueLoyaltyCardOpen: false,
   };
 
   private listeners: Set<PosStoreListener> = new Set();
@@ -324,6 +342,63 @@ class PosStore {
     });
   }
 
+  public suspendCurrentSale(notes?: string): boolean {
+    if (this.state.cartItems.length === 0) return false;
+    const suspended: SuspendedSale = {
+      id: generateUUID(),
+      customer: this.state.selectedCustomer,
+      cartItems: [...this.state.cartItems],
+      cartDiscountPercent: this.state.cartDiscountPercent,
+      cartDiscountFixed: this.state.cartDiscountFixed,
+      created_at: new Date().toISOString(),
+      notes: notes || 'Suspended sale',
+    };
+    this.setState({
+      suspendedSales: [suspended, ...this.state.suspendedSales],
+      cartItems: [],
+      selectedCustomer: null,
+      cartDiscountPercent: 0,
+      cartDiscountFixed: 0,
+      currentSaleId: generateUUID(),
+      activeWorkflowStep: 4,
+    });
+    return true;
+  }
+
+  public restoreSuspendedSale(id: string): boolean {
+    const sale = this.state.suspendedSales.find(s => s.id === id);
+    if (!sale) return false;
+    this.setState({
+      suspendedSales: this.state.suspendedSales.filter(s => s.id !== id),
+      cartItems: sale.cartItems,
+      selectedCustomer: sale.customer,
+      cartDiscountPercent: sale.cartDiscountPercent,
+      cartDiscountFixed: sale.cartDiscountFixed,
+      currentSaleId: generateUUID(),
+      activeWorkflowStep: 8,
+      isSuspendedSalesOpen: false,
+    });
+    return true;
+  }
+
+  public removeSuspendedSale(id: string): void {
+    this.setState({
+      suspendedSales: this.state.suspendedSales.filter(s => s.id !== id),
+    });
+  }
+
+  public setSuspendedSalesOpen(open: boolean): void {
+    this.setState({ isSuspendedSalesOpen: open });
+  }
+
+  public setCalculatorOpen(open: boolean): void {
+    this.setState({ isCalculatorOpen: open });
+  }
+
+  public setIssueLoyaltyCardOpen(open: boolean): void {
+    this.setState({ isIssueLoyaltyCardOpen: open });
+  }
+
   public logout() {
     this.setState({
       currentUser: null,
@@ -365,6 +440,12 @@ export function usePos() {
     proceedToSaleCompleted: () => posStore.proceedToSaleCompleted(),
     proceedToNextCustomer: () => posStore.proceedToNextCustomer(),
     openCloseShiftModal: () => posStore.openCloseShiftModal(),
+    suspendCurrentSale: (notes?: string) => posStore.suspendCurrentSale(notes),
+    restoreSuspendedSale: (id: string) => posStore.restoreSuspendedSale(id),
+    removeSuspendedSale: (id: string) => posStore.removeSuspendedSale(id),
+    setSuspendedSalesOpen: (open: boolean) => posStore.setSuspendedSalesOpen(open),
+    setCalculatorOpen: (open: boolean) => posStore.setCalculatorOpen(open),
+    setIssueLoyaltyCardOpen: (open: boolean) => posStore.setIssueLoyaltyCardOpen(open),
     setCurrentUser: (user: User | null) => posStore.setState({ currentUser: user }),
     setActiveShift: (shift: Shift | null) => posStore.setState({ activeShift: shift }),
     setActiveRegister: (register: Register | null) => posStore.setState({ activeRegister: register }),

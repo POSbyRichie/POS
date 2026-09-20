@@ -22,6 +22,9 @@ import { SystemView } from './components/system/SystemView';
 import { LoginModal } from './components/auth/LoginModal';
 import { OpenShiftModal } from './components/shift/OpenShiftModal';
 import { CloseShiftModal } from './components/shift/CloseShiftModal';
+import { CalculatorModal } from './components/pos/CalculatorModal';
+import { SuspendedSalesModal } from './components/pos/SuspendedSalesModal';
+import { IssueLoyaltyCardModal } from './components/pos/IssueLoyaltyCardModal';
 import { usePos } from './store/posStore';
 
 export function App() {
@@ -33,12 +36,18 @@ export function App() {
     isPaymentModalOpen,
     isReceiptModalOpen,
     isCustomerModalOpen,
+    isSuspendedSalesOpen,
+    isCalculatorOpen,
+    isIssueLoyaltyCardOpen,
     setActiveWorkflowStep,
     proceedToNextCustomer,
     setClosingShiftOpen,
     setPaymentModalOpen,
     setReceiptModalOpen,
     setCustomerModalOpen,
+    setSuspendedSalesOpen,
+    setCalculatorOpen,
+    setIssueLoyaltyCardOpen,
   } = usePos();
 
   const { navigate } = useRouter();
@@ -212,6 +221,9 @@ export function App() {
       )}
 
       {isSyncModalOpen && <SyncStatusModal onClose={() => setIsSyncModalOpen(false)} />}
+      {isSuspendedSalesOpen && <SuspendedSalesModal onClose={() => setSuspendedSalesOpen(false)} />}
+      {isCalculatorOpen && <CalculatorModal onClose={() => setCalculatorOpen(false)} />}
+      {isIssueLoyaltyCardOpen && <IssueLoyaltyCardModal onClose={() => setIssueLoyaltyCardOpen(false)} />}
     </AppLayout>
   );
 }
