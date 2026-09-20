@@ -5,8 +5,7 @@ import { seedDatabase } from './db/seed';
 
 // Components
 import { Dashboard } from './components/dashboard/Dashboard';
-import { ProductCatalog } from './components/pos/ProductCatalog';
-import { CartReview } from './components/pos/CartReview';
+import { SalesView } from './components/sales/SalesView';
 import { CustomerSelector } from './components/pos/CustomerSelector';
 import { PaymentModal } from './components/pos/PaymentModal';
 import { ReceiptModal } from './components/pos/ReceiptModal';
@@ -15,8 +14,11 @@ import { ProductNotFoundModal } from './components/pos/ProductNotFoundModal';
 import { StockAlertModal } from './components/pos/StockAlertModal';
 import { SyncStatusModal } from './components/sync/SyncStatusModal';
 import { InventoryManager } from './components/inventory/InventoryManager';
+import { CustomersView } from './components/customers/CustomersView';
+import { ShiftsView } from './components/shift/ShiftsView';
 import { ReportsView } from './components/reports/ReportsView';
-import { SettingsView } from './components/views/SettingsView';
+import { AdministrationView } from './components/admin/AdministrationView';
+import { SystemView } from './components/system/SystemView';
 import { LoginModal } from './components/auth/LoginModal';
 import { OpenShiftModal } from './components/shift/OpenShiftModal';
 import { CloseShiftModal } from './components/shift/CloseShiftModal';
@@ -32,9 +34,6 @@ export function App() {
     isReceiptModalOpen,
     isCustomerModalOpen,
     setActiveWorkflowStep,
-    proceedToReviewCart,
-    proceedToCustomer,
-    proceedToPayment,
     proceedToNextCustomer,
     setClosingShiftOpen,
     setPaymentModalOpen,
@@ -60,7 +59,7 @@ export function App() {
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-300">
         <div className="w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin mb-4" />
         <p className="text-sm font-bold">Initializing Antigravity POS Architecture...</p>
-        <p className="text-xs text-slate-500 mt-1">Phase 1 Foundation &bull; Verifying local database</p>
+        <p className="text-xs text-slate-500 mt-1">Authoritative Modular Hierarchy &bull; Verifying local database</p>
       </div>
     );
   }
@@ -77,7 +76,7 @@ export function App() {
 
   return (
     <AppLayout onOpenSyncModal={() => setIsSyncModalOpen(true)}>
-      {/* Route: Home / Dashboard (Step 3) */}
+      {/* 1. Route: Dashboard */}
       <Route path="/">
         <div className="flex-1 overflow-y-auto pr-1">
           <Dashboard onOpenSyncModal={() => setIsSyncModalOpen(true)} />
@@ -90,39 +89,66 @@ export function App() {
         </div>
       </Route>
 
-      {/* Route: POS Terminal (Steps 4-17) */}
-      <Route path="/pos">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 h-[calc(100vh-6.5rem)]">
-          <div className="lg:col-span-8 flex flex-col h-full overflow-hidden">
-            <ProductCatalog onProceedToReviewCart={() => proceedToReviewCart()} />
-          </div>
-          <div className="lg:col-span-4 flex flex-col h-full overflow-hidden">
-            <CartReview
-              onProceedToPayment={() => proceedToPayment()}
-              onOpenCustomerModal={() => proceedToCustomer()}
-            />
-          </div>
-        </div>
+      {/* 2. Route: Sales (New Sale, Scan, Search, Cart, Customer, Payment, Receipt) */}
+      <Route path="/sales">
+        <SalesView />
       </Route>
 
-      {/* Route: Inventory Management */}
+      <Route path="/pos">
+        <SalesView />
+      </Route>
+
+      {/* 3. Route: Inventory (Products, Categories, Stock, Stock In, Adjustments, Low Stock) */}
       <Route path="/inventory">
         <div className="flex-1 overflow-y-auto pr-1">
           <InventoryManager />
         </div>
       </Route>
 
-      {/* Route: Reports */}
+      {/* 4. Route: Customers (Customers Directory & Loyalty Points Audit Trail) */}
+      <Route path="/customers">
+        <div className="flex-1 overflow-y-auto pr-1">
+          <CustomersView />
+        </div>
+      </Route>
+
+      {/* 5. Route: Shifts (Open Shift, Current Shift Metrics & Movements, Close Shift Variance) */}
+      <Route path="/shifts">
+        <div className="flex-1 overflow-y-auto pr-1">
+          <ShiftsView />
+        </div>
+      </Route>
+
+      {/* 6. Route: Reports (Sales, Inventory, Cashier, Payments, Shifts) */}
       <Route path="/reports">
         <div className="flex-1 overflow-y-auto pr-1">
           <ReportsView />
         </div>
       </Route>
 
-      {/* Route: Settings & Environment Diagnostics */}
+      {/* 7. Route: Administration (Users, Roles, Registers, Devices, Settings) */}
+      <Route path="/admin">
+        <div className="flex-1 overflow-y-auto pr-1">
+          <AdministrationView />
+        </div>
+      </Route>
+
+      <Route path="/administration">
+        <div className="flex-1 overflow-y-auto pr-1">
+          <AdministrationView />
+        </div>
+      </Route>
+
       <Route path="/settings">
         <div className="flex-1 overflow-y-auto pr-1">
-          <SettingsView />
+          <AdministrationView />
+        </div>
+      </Route>
+
+      {/* 8. Route: System (Offline Status, Sync Center, Sync Errors, Audit Logs) */}
+      <Route path="/system">
+        <div className="flex-1 overflow-y-auto pr-1">
+          <SystemView />
         </div>
       </Route>
 

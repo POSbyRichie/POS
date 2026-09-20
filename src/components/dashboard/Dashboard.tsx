@@ -9,8 +9,13 @@ import {
   Package,
   PlusCircle,
   Banknote,
+  Users,
+  BarChart3,
+  Shield,
+  Activity,
 } from 'lucide-react';
 import { usePos } from '../../store/posStore';
+import { useRouter } from '../../routes/router';
 import { db } from '../../db';
 import { Product } from '../../types';
 import { formatMoney } from '../../utils/money';
@@ -22,6 +27,7 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ onOpenSyncModal }) => {
+  const { navigate } = useRouter();
   const {
     currentUser,
     activeShift,
@@ -259,6 +265,81 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenSyncModal }) => {
               </button>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Subsystem Quick Launchers */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+            POS Subsystems &amp; Navigation Centers
+          </h3>
+          <span className="text-[11px] text-slate-500">Fast cashier workflow routing</span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
+          <button
+            onClick={() => navigate('/sales')}
+            className="p-3 bg-slate-950 border border-slate-800 hover:border-sky-500 rounded-xl text-left transition group"
+          >
+            <ShoppingCart className="w-4 h-4 text-sky-400 mb-2 group-hover:scale-110 transition" />
+            <span className="font-bold text-white text-xs block">Sales</span>
+            <span className="text-[10px] text-slate-500">7 sub-actions</span>
+          </button>
+
+          <button
+            onClick={() => navigate('/inventory')}
+            className="p-3 bg-slate-950 border border-slate-800 hover:border-emerald-500 rounded-xl text-left transition group"
+          >
+            <Package className="w-4 h-4 text-emerald-400 mb-2 group-hover:scale-110 transition" />
+            <span className="font-bold text-white text-xs block">Inventory</span>
+            <span className="text-[10px] text-slate-500">Stock &amp; Stock In</span>
+          </button>
+
+          <button
+            onClick={() => navigate('/customers')}
+            className="p-3 bg-slate-950 border border-slate-800 hover:border-purple-500 rounded-xl text-left transition group"
+          >
+            <Users className="w-4 h-4 text-purple-400 mb-2 group-hover:scale-110 transition" />
+            <span className="font-bold text-white text-xs block">Customers</span>
+            <span className="text-[10px] text-slate-500">Loyalty ledger</span>
+          </button>
+
+          <button
+            onClick={() => navigate('/shifts')}
+            className="p-3 bg-slate-950 border border-slate-800 hover:border-amber-500 rounded-xl text-left transition group"
+          >
+            <Clock className="w-4 h-4 text-amber-400 mb-2 group-hover:scale-110 transition" />
+            <span className="font-bold text-white text-xs block">Shifts</span>
+            <span className="text-[10px] text-slate-500">Open &amp; Close</span>
+          </button>
+
+          <button
+            onClick={() => navigate('/reports')}
+            className="p-3 bg-slate-950 border border-slate-800 hover:border-indigo-500 rounded-xl text-left transition group"
+          >
+            <BarChart3 className="w-4 h-4 text-indigo-400 mb-2 group-hover:scale-110 transition" />
+            <span className="font-bold text-white text-xs block">Reports</span>
+            <span className="text-[10px] text-slate-500">Analytics</span>
+          </button>
+
+          <button
+            onClick={() => navigate('/admin')}
+            className="p-3 bg-slate-950 border border-slate-800 hover:border-rose-500 rounded-xl text-left transition group"
+          >
+            <Shield className="w-4 h-4 text-rose-400 mb-2 group-hover:scale-110 transition" />
+            <span className="font-bold text-white text-xs block">Admin</span>
+            <span className="text-[10px] text-slate-500">Users &amp; Roles</span>
+          </button>
+
+          <button
+            onClick={() => navigate('/system')}
+            className="p-3 bg-slate-950 border border-slate-800 hover:border-cyan-500 rounded-xl text-left transition group"
+          >
+            <Activity className="w-4 h-4 text-cyan-400 mb-2 group-hover:scale-110 transition" />
+            <span className="font-bold text-white text-xs block">System</span>
+            <span className="text-[10px] text-slate-500">Sync &amp; Audits</span>
+          </button>
         </div>
       </div>
 

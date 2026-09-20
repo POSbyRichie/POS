@@ -1,6 +1,33 @@
 import { useState, useEffect } from 'react';
 
-export type RoutePath = '/' | '/dashboard' | '/pos' | '/inventory' | '/reports' | '/settings';
+export type RoutePath =
+  | '/'
+  | '/dashboard'
+  | '/pos'
+  | '/sales'
+  | '/inventory'
+  | '/customers'
+  | '/shifts'
+  | '/reports'
+  | '/admin'
+  | '/administration'
+  | '/settings'
+  | '/system';
+
+const VALID_ROUTES: RoutePath[] = [
+  '/',
+  '/dashboard',
+  '/pos',
+  '/sales',
+  '/inventory',
+  '/customers',
+  '/shifts',
+  '/reports',
+  '/admin',
+  '/administration',
+  '/settings',
+  '/system',
+];
 
 class RouterService {
   private currentPath: RoutePath = '/';
@@ -21,7 +48,7 @@ class RouterService {
 
   private getPathFromHash(): RoutePath {
     const hash = window.location.hash.replace('#', '') || '/';
-    if (['/', '/dashboard', '/pos', '/inventory', '/reports', '/settings'].includes(hash)) {
+    if (VALID_ROUTES.includes(hash as RoutePath)) {
       return hash as RoutePath;
     }
     return '/';

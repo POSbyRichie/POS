@@ -30,8 +30,10 @@ export const InventoryManager: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [movements, setMovements] = useState<InventoryMovement[]>([]);
 
-  // Navigation tabs
-  const [activeTab, setActiveTab] = useState<'catalog' | 'history' | 'categories'>('catalog');
+  // Navigation tabs matching authoritative hierarchy
+  const [activeTab, setActiveTab] = useState<
+    'products' | 'categories' | 'stock' | 'stock_in' | 'adjustments' | 'low_stock'
+  >('products');
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -43,6 +45,14 @@ export const InventoryManager: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState<boolean>(false);
+
+  // Stock In Form state
+  const [stockInProductId, setStockInProductId] = useState<string>('');
+  const [stockInQty, setStockInQty] = useState<string>('10');
+  const [stockInCost, setStockInCost] = useState<string>('');
+  const [stockInNotes, setStockInNotes] = useState<string>('');
+  const [isSubmittingStockIn, setIsSubmittingStockIn] = useState<boolean>(false);
+  const [stockInFeedback, setStockInFeedback] = useState<string | null>(null);
 
   // Stock Adjustment Form
   const [adjType, setAdjType] = useState<InventoryMovementType>('RESTOCK');
@@ -311,6 +321,63 @@ export const InventoryManager: React.FC = () => {
     return productRepository.calculateMargin(cost, sell);
   }, [newProdCostPrice, newProdSellingPrice]);
 
+  // Real-time Stock Valuation
+  const stockValuation = useMemo(() => {
+    let totalUnits = 0;
+    let totalCostVal = 0;
+    let totalRetailVal = 0;
+    for (const p of products) {
+      totalUnits += p.stock_quantity;
+      totalCostVal += p.stock_quantity * p.cost_price;
+      totalRetailVal += p.stock_quantity * p.selling_price;
+    }
+    const projectedProfit = totalRetailVal - totalCostVal;
+    return { totalUnits, totalCostVal, totalRetailVal, projectedProfit };
+  }, [products]);
+
+  // Handle Stock In Submit
+  const handleStockInSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStockInFeedback(null);
+    if (!stockInProductId) {
+      setStockInFeedback('Please select a product for stock in');
+      return;
+    }
+    const targetProduct = products.find(p => p.id === stockInProductId);
+    if (!targetProduct) return;
+
+    const qty = parseInt(stockInQty, 10);
+    if (isNaN(qty) || qty <= 0) {
+      setStockInFeedback('Quantity must be a positive integer');
+      return;
+    }
+
+    setIsSubmittingStockIn(true);
+    try {
+      await inventoryRepository.adjustStock(
+        targetProduct.id,
+        qty,
+        'RESTOCK',
+        activeRegister?.id || 'reg-01',
+        currentUser?.id || 'cashier',
+        stockInNotes.trim() ? `Stock In: ${stockInNotes.trim()}` : 'Purchase Receipt / Restock'
+      );
+
+      await loadData();
+      setStockInFeedback(
+        `Successfully received +${qty} ${targetProduct.unit} for "${targetProduct.name}". New Stock: ${
+          targetProduct.stock_quantity + qty
+        }`
+      );
+      setStockInQty('10');
+      setStockInNotes('');
+    } catch (err: any) {
+      setStockInFeedback(`Failed to record stock in: ${err.message || String(err)}`);
+    } finally {
+      setIsSubmittingStockIn(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Header Card */}
@@ -359,18 +426,25 @@ export const InventoryManager: React.FC = () => {
       )}
 
       {/* Tabs Bar */}
+      {/* Tabs Bar matching authoritative hierarchy */}
       <div className="flex items-center justify-between border-b border-slate-800 pb-3 flex-wrap gap-2">
-        <div className="flex gap-2">
+        <div className="flex gap-1.5 flex-wrap">
+          {/* 1. Products */}
           <button
-            onClick={() => setActiveTab('catalog')}
+            onClick={() => {
+              setActiveTab('products');
+              setStockFilter('all');
+            }}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition border ${
-              activeTab === 'catalog'
+              activeTab === 'products'
                 ? 'bg-sky-600 border-sky-500 text-white shadow-sm'
                 : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
             }`}
           >
             Products ({products.length})
           </button>
+
+          {/* 2. Categories */}
           <button
             onClick={() => setActiveTab('categories')}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition border ${
@@ -381,20 +455,68 @@ export const InventoryManager: React.FC = () => {
           >
             Categories ({categories.length})
           </button>
+
+          {/* 3. Stock */}
           <button
-            onClick={() => setActiveTab('history')}
+            onClick={() => setActiveTab('stock')}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition border ${
-              activeTab === 'history'
+              activeTab === 'stock'
                 ? 'bg-sky-600 border-sky-500 text-white shadow-sm'
                 : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
             }`}
           >
-            Stock Movement Log ({movements.length})
+            Stock
+          </button>
+
+          {/* 4. Stock In */}
+          <button
+            onClick={() => {
+              setActiveTab('stock_in');
+              if (!stockInProductId && products.length > 0) {
+                setStockInProductId(products[0].id);
+                setStockInCost(String(products[0].cost_price));
+              }
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition border ${
+              activeTab === 'stock_in'
+                ? 'bg-sky-600 border-sky-500 text-white shadow-sm'
+                : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+            }`}
+          >
+            Stock In
+          </button>
+
+          {/* 5. Adjustments */}
+          <button
+            onClick={() => setActiveTab('adjustments')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition border ${
+              activeTab === 'adjustments'
+                ? 'bg-sky-600 border-sky-500 text-white shadow-sm'
+                : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+            }`}
+          >
+            Adjustments ({movements.length})
+          </button>
+
+          {/* 6. Low Stock */}
+          <button
+            onClick={() => {
+              setActiveTab('low_stock');
+              setStockFilter('low_stock');
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition border flex items-center gap-1.5 ${
+              activeTab === 'low_stock'
+                ? 'bg-amber-600 border-amber-500 text-white shadow-sm'
+                : 'bg-slate-900 border-slate-800 text-amber-400 hover:bg-slate-800 hover:text-amber-300'
+            }`}
+          >
+            <AlertTriangle className="w-3.5 h-3.5" />
+            <span>Low Stock ({lowStockCount})</span>
           </button>
         </div>
 
-        {/* Stock Status Pills (when on catalog tab) */}
-        {activeTab === 'catalog' && (
+        {/* Stock Status Pills (when on products tab) */}
+        {activeTab === 'products' && (
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setStockFilter('all')}
@@ -431,8 +553,8 @@ export const InventoryManager: React.FC = () => {
         )}
       </div>
 
-      {/* TAB 1: PRODUCT CATALOG */}
-      {activeTab === 'catalog' && (
+      {/* TAB 1: PRODUCT CATALOG & LOW STOCK */}
+      {(activeTab === 'products' || activeTab === 'low_stock') && (
         <div className="space-y-4">
           {/* Search & Category Filter bar */}
           <div className="flex flex-col sm:flex-row gap-3">
@@ -632,8 +754,8 @@ export const InventoryManager: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 3: MOVEMENT HISTORY */}
-      {activeTab === 'history' && (
+      {/* TAB 3: ADJUSTMENTS & MOVEMENT HISTORY */}
+      {activeTab === 'adjustments' && (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
           <div className="p-4 bg-slate-950/70 border-b border-slate-800 text-xs font-bold text-slate-400 uppercase tracking-wider flex justify-between items-center">
             <span>Immutable Stock Movement Ledger</span>
@@ -675,6 +797,192 @@ export const InventoryManager: React.FC = () => {
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* TAB 4: STOCK VALUATION & REAL-TIME INVENTORY */}
+      {activeTab === 'stock' && (
+        <div className="space-y-6">
+          {/* 4 Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
+              <span className="text-xs font-semibold text-slate-400 block">Total Units In Stock</span>
+              <span className="text-2xl font-black text-white mt-1 block">
+                {stockValuation.totalUnits.toLocaleString()} units
+              </span>
+              <span className="text-[11px] text-slate-500 mt-1 block">Across {products.length} SKUs</span>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
+              <span className="text-xs font-semibold text-slate-400 block">Inventory Cost Value</span>
+              <span className="text-2xl font-black text-sky-400 mt-1 block">
+                {formatMoney(stockValuation.totalCostVal)}
+              </span>
+              <span className="text-[11px] text-slate-500 mt-1 block">Purchase value at cost</span>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
+              <span className="text-xs font-semibold text-slate-400 block">Total Retail Valuation</span>
+              <span className="text-2xl font-black text-emerald-400 mt-1 block">
+                {formatMoney(stockValuation.totalRetailVal)}
+              </span>
+              <span className="text-[11px] text-slate-500 mt-1 block">Expected revenue at retail</span>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
+              <span className="text-xs font-semibold text-slate-400 block">Projected Gross Profit</span>
+              <span className="text-2xl font-black text-amber-400 mt-1 block">
+                {formatMoney(stockValuation.projectedProfit)}
+              </span>
+              <span className="text-[11px] text-slate-500 mt-1 block">
+                {stockValuation.totalRetailVal > 0
+                  ? `${Math.round((stockValuation.projectedProfit / stockValuation.totalRetailVal) * 100)}% overall margin`
+                  : '0% overall margin'}
+              </span>
+            </div>
+          </div>
+
+          {/* Detailed Stock Ledger Table */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            <div className="p-4 bg-slate-950/70 border-b border-slate-800 flex justify-between items-center text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <span>Current Stock Levels by Product</span>
+              <span className="text-[10px] text-slate-500">{products.length} registered products</span>
+            </div>
+            <div className="divide-y divide-slate-800/80 max-h-[500px] overflow-y-auto">
+              {products.map(prod => {
+                const isOut = prod.stock_quantity <= 0;
+                const isLow = prod.stock_quantity > 0 && prod.stock_quantity <= prod.min_stock_level;
+                const costVal = prod.stock_quantity * prod.cost_price;
+                const retailVal = prod.stock_quantity * prod.selling_price;
+                return (
+                  <div key={prod.id} className="p-4 flex items-center justify-between hover:bg-slate-800/30 transition text-xs">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-white text-sm">{prod.name}</span>
+                        <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+                          {prod.sku}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1">
+                        <span>Cost: {formatMoney(prod.cost_price)}</span>
+                        <span>Retail: {formatMoney(prod.selling_price)}</span>
+                        <span>Min Threshold: {prod.min_stock_level} {prod.unit}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                          isOut
+                            ? 'bg-rose-950 text-rose-400 border border-rose-800'
+                            : isLow
+                            ? 'bg-amber-950 text-amber-400 border border-amber-800'
+                            : 'bg-emerald-950 text-emerald-400 border border-emerald-800'
+                        }`}
+                      >
+                        {prod.stock_quantity} {prod.unit}
+                      </span>
+                      <div className="text-[10px] text-slate-400 mt-1 font-mono">
+                        Val: {formatMoney(costVal)} / {formatMoney(retailVal)}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 5: STOCK IN / PURCHASE RESTOCK */}
+      {activeTab === 'stock_in' && (
+        <div className="max-w-2xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
+          <div>
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-emerald-400" />
+              <span>Receive Inventory / Stock In</span>
+            </h3>
+            <p className="text-xs text-slate-400 mt-1">
+              Record incoming purchase orders or fresh deliveries directly into local inventory.
+            </p>
+          </div>
+
+          {stockInFeedback && (
+            <div
+              className={`p-3 rounded-xl text-xs border ${
+                stockInFeedback.includes('Successfully')
+                  ? 'bg-emerald-950/80 border-emerald-800 text-emerald-300'
+                  : 'bg-rose-950/80 border-rose-800 text-rose-300'
+              }`}
+            >
+              {stockInFeedback}
+            </div>
+          )}
+
+          <form onSubmit={handleStockInSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">Select Product *</label>
+              <select
+                value={stockInProductId}
+                onChange={e => {
+                  setStockInProductId(e.target.value);
+                  const p = products.find(x => x.id === e.target.value);
+                  if (p) setStockInCost(String(p.cost_price));
+                }}
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-sky-500"
+              >
+                <option value="">-- Choose Product --</option>
+                {products.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} (SKU: {p.sku}) &bull; Current: {p.stock_quantity} {p.unit}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">Quantity to Receive *</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={stockInQty}
+                  onChange={e => setStockInQty(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-sky-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">Unit Cost Price (Cents)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={stockInCost}
+                  onChange={e => setStockInCost(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-sky-500"
+                  placeholder="Defaults to current cost"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">Supplier / PO Reference / Note</label>
+              <input
+                type="text"
+                value={stockInNotes}
+                onChange={e => setStockInNotes(e.target.value)}
+                placeholder="e.g., Invoice #INV-8821 from Apex Supplies"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-sky-500"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmittingStockIn || !stockInProductId}
+              className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2"
+            >
+              <Check className="w-4 h-4" />
+              <span>{isSubmittingStockIn ? 'Recording Movement...' : 'Confirm & Commit Stock In'}</span>
+            </button>
+          </form>
         </div>
       )}
 

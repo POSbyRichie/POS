@@ -17,7 +17,18 @@ export interface PosState {
   cartDiscountPercent: number;
   cartDiscountFixed: number;
   activeWorkflowStep: number; // 1 to 18 following authoritative diagram
-  activeView: 'pos' | 'dashboard' | 'inventory' | 'reports' | 'settings';
+  activeView:
+    | 'pos'
+    | 'sales'
+    | 'dashboard'
+    | 'inventory'
+    | 'customers'
+    | 'shifts'
+    | 'reports'
+    | 'admin'
+    | 'administration'
+    | 'settings'
+    | 'system';
   lastCompletedSaleResult: CompleteSaleResult | null;
   isOpeningShiftOpen: boolean;
   isClosingShiftOpen: boolean;
