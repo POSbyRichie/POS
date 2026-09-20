@@ -94,9 +94,9 @@ export const CustomerSelector: React.FC<CustomerSelectorProps> = ({ onClose }) =
   });
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
-        <div className="p-5 bg-gradient-to-r from-sky-950/80 to-slate-900 border-b border-slate-800 flex justify-between items-center">
+    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150 my-auto max-h-[92vh] flex flex-col">
+        <div className="p-4 sm:p-5 bg-gradient-to-r from-sky-950/80 to-slate-900 border-b border-slate-800 flex justify-between items-center shrink-0">
           <div>
             <div className="flex items-center gap-2 text-sky-400 font-bold text-sm">
               <User className="w-5 h-5" />
@@ -109,7 +109,7 @@ export const CustomerSelector: React.FC<CustomerSelectorProps> = ({ onClose }) =
           </button>
         </div>
 
-        <div className="p-5 space-y-4">
+        <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
           {/* Walk-in Customer Default Button */}
           <button
             onClick={handleSelectWalkIn}

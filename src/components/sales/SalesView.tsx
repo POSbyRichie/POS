@@ -14,6 +14,7 @@ import {
   Printer,
   Package,
   CheckCircle,
+  ShoppingCart,
 } from 'lucide-react';
 import { usePos } from '../../store/posStore';
 import { productRepository, categoryRepository } from '../../db';
@@ -50,6 +51,7 @@ export const SalesView: React.FC = () => {
   const [isDiscountPopoverOpen, setIsDiscountPopoverOpen] = useState<boolean>(false);
   const [discountPercentInput, setDiscountPercentInput] = useState<string>('');
   const [justAddedProductId, setJustAddedProductId] = useState<string | null>(null);
+  const [mobileTab, setMobileTab] = useState<'catalog' | 'cart'>('catalog');
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -152,11 +154,40 @@ export const SalesView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row h-full overflow-hidden bg-slate-100 dark:bg-slate-900 select-none text-slate-800 dark:text-slate-100 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-      {/* =================================================================== */}
-      {/* LEFT COLUMN: Cart, Customer & Checkout Panel (Matching Reference)  */}
-      {/* =================================================================== */}
-      <div className="w-full lg:w-[45%] xl:w-[42%] flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 relative z-10">
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-100 dark:bg-slate-900 select-none text-slate-800 dark:text-slate-100 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+      {/* Mobile Responsive Segmented Tab Control (< lg) */}
+      <div className="lg:hidden flex items-center p-1 bg-slate-200/80 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 gap-1 shrink-0">
+        <button
+          type="button"
+          onClick={() => setMobileTab('catalog')}
+          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${
+            mobileTab === 'catalog'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <Package className="w-3.5 h-3.5" />
+          <span>Catalog ({products.length})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab('cart')}
+          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${
+            mobileTab === 'cart'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <ShoppingCart className="w-3.5 h-3.5" />
+          <span>Cart ({cartItems.length}) &bull; {formatMoney(totals.grandTotal)}</span>
+        </button>
+      </div>
+
+      <div className="flex-1 flex flex-col lg:flex-row h-full overflow-hidden">
+        {/* =================================================================== */}
+        {/* LEFT COLUMN: Cart, Customer & Checkout Panel (Matching Reference)  */}
+        {/* =================================================================== */}
+        <div className={`w-full lg:w-[45%] xl:w-[420px] flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 relative z-10 shrink-0 ${mobileTab === 'cart' ? 'flex' : 'hidden lg:flex'}`}>
         {/* Row 1: Customer Selection & Quick Add */}
         <div className="p-3 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2">
           <button
@@ -416,9 +447,9 @@ export const SalesView: React.FC = () => {
       {/* =================================================================== */}
       {/* RIGHT COLUMN: Search Bar, Category Chips & 5-Column Product Grid   */}
       {/* =================================================================== */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-950/60 p-4 gap-3">
+      <div className={`flex-1 flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-950/60 p-2 sm:p-4 gap-2 sm:gap-3 ${mobileTab === 'catalog' ? 'flex' : 'hidden lg:flex'}`}>
         {/* Top Search & Barcode Trigger Row */}
-        <div className="relative flex items-center">
+        <div className="relative flex items-center shrink-0">
           <Search className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
           <input
             ref={searchInputRef}
@@ -431,7 +462,7 @@ export const SalesView: React.FC = () => {
               }
             }}
             placeholder="Type product name or scan barcode"
-            className="w-full pl-12 pr-12 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition font-medium"
+            className="w-full pl-12 pr-12 py-2.5 sm:py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition font-medium"
           />
           <button
             type="button"
@@ -475,7 +506,7 @@ export const SalesView: React.FC = () => {
           })}
         </div>
 
-        {/* Dense 5-Column Touch Grid of Products (Matching Reference Design) */}
+        {/* Responsive Touch Grid of Products */}
         <div className="flex-1 overflow-y-auto pr-1">
           {filteredProducts.length === 0 ? (
             <div className="h-64 flex flex-col items-center justify-center text-center text-slate-400 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
@@ -484,7 +515,7 @@ export const SalesView: React.FC = () => {
               <p className="text-xs text-slate-400 mt-1">Try another search or category</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-3">
               {filteredProducts.map(product => {
                 const inStock = product.stock_quantity > 0;
                 const isCritical = product.stock_quantity <= 2;
@@ -496,7 +527,7 @@ export const SalesView: React.FC = () => {
                     key={product.id}
                     type="button"
                     onClick={() => handleProductSelect(product)}
-                    className={`relative p-3.5 rounded-2xl bg-white dark:bg-slate-900 border transition flex flex-col justify-between items-center text-center h-28 sm:h-32 shadow-sm group active:scale-95 ${
+                    className={`relative p-2.5 sm:p-3.5 rounded-2xl bg-white dark:bg-slate-900 border transition flex flex-col justify-between items-center text-center min-h-[105px] sm:min-h-[120px] shadow-sm group active:scale-95 cursor-pointer ${
                       wasJustAdded
                         ? 'ring-2 ring-emerald-500 border-emerald-500'
                         : 'border-slate-200 dark:border-slate-800 hover:border-indigo-500 hover:shadow-md'
@@ -512,10 +543,10 @@ export const SalesView: React.FC = () => {
                       </p>
                     </div>
 
-                    {/* Stock Pill Badge (Green/Yellow/Red matching inspiration) */}
+                    {/* Stock Pill Badge */}
                     <div className="mt-auto">
                       <span
-                        className={`inline-block px-3 py-0.5 rounded-full text-[10px] font-extrabold font-mono transition ${
+                        className={`inline-block px-2.5 sm:px-3 py-0.5 rounded-full text-[9px] sm:text-[10px] font-extrabold font-mono transition ${
                           !inStock || isCritical
                             ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-400 border border-rose-200 dark:border-rose-900'
                             : isLow
@@ -539,10 +570,33 @@ export const SalesView: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
 
-      {/* Modal Dialogs */}
-      {isReprintOpen && <ReprintModal onClose={() => setIsReprintOpen(false)} />}
+        {/* Mobile Floating Bottom Summary Pill (< lg when items in cart) */}
+        {cartItems.length > 0 && (
+          <div className="lg:hidden p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shrink-0 flex items-center justify-between rounded-xl shadow-lg mt-auto">
+            <div>
+              <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'} in cart
+              </p>
+              <p className="text-base font-black text-slate-900 dark:text-white font-mono">
+                {formatMoney(totals.grandTotal)}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setMobileTab('cart')}
+              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-600/30 flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <span>Review Cart & Pay</span>
+              <CreditCard className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+      </div>
     </div>
+
+    {/* Modal Dialogs */}
+    {isReprintOpen && <ReprintModal onClose={() => setIsReprintOpen(false)} />}
+  </div>
   );
 };

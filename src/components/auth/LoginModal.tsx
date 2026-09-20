@@ -47,11 +47,14 @@ export const LoginModal: React.FC = () => {
       setShowEnrollmentModal(true);
     }
 
-    const [allUsers, allRegisters, cached] = await Promise.all([
-      db.users.where('is_active').equals(1).toArray(),
-      db.registers.where('is_active').equals(1).toArray(),
+    const [rawUsers, rawRegisters, cached] = await Promise.all([
+      db.users.toArray(),
+      db.registers.toArray(),
       authService.getCachedOfflineUsers(),
     ]);
+
+    const allUsers = rawUsers.filter(u => u.is_active !== false);
+    const allRegisters = rawRegisters.filter(r => r.is_active !== false);
 
     setUsers(allUsers);
     setRegisters(allRegisters);
@@ -151,10 +154,10 @@ export const LoginModal: React.FC = () => {
     : false;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
+    <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row my-auto max-h-[92vh] animate-in fade-in zoom-in-95 duration-150">
         {/* Left Column: Device Status, User Selection & Register */}
-        <div className="w-full md:w-5/12 bg-slate-950/70 p-6 border-b md:border-b-0 md:border-r border-slate-800 flex flex-col justify-between">
+        <div className="w-full md:w-5/12 bg-slate-950/70 p-4 sm:p-6 border-b md:border-b-0 md:border-r border-slate-800 flex flex-col justify-between overflow-y-auto">
           <div>
             {/* Header & Connectivity Badge */}
             <div className="flex items-center justify-between mb-2">
@@ -262,7 +265,7 @@ export const LoginModal: React.FC = () => {
         </div>
 
         {/* Right Column: PIN Keypad */}
-        <div className="w-full md:w-7/12 p-6 flex flex-col justify-between">
+        <div className="w-full md:w-7/12 p-4 sm:p-6 flex flex-col justify-between overflow-y-auto">
           <div>
             <div className="text-center mb-3">
               <span className="text-xs text-slate-400">Authenticating as</span>

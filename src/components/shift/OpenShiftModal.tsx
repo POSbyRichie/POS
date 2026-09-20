@@ -97,17 +97,17 @@ export const OpenShiftModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
-        <div className="bg-gradient-to-r from-sky-900/60 to-slate-900 p-6 border-b border-slate-800">
-          <div className="flex items-center gap-2 text-sky-400 font-bold text-lg mb-1">
+    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150 my-auto max-h-[92vh] flex flex-col">
+        <div className="bg-gradient-to-r from-sky-900/60 to-slate-900 p-4 sm:p-6 border-b border-slate-800 shrink-0">
+          <div className="flex items-center gap-2 text-sky-400 font-bold text-base sm:text-lg mb-1">
             <PlayCircle className="w-5 h-5 text-sky-400" />
             <span>2. OPEN SHIFT</span>
           </div>
           <p className="text-xs text-slate-400">Initialize terminal cash float & verify register before trading</p>
         </div>
 
-        <form onSubmit={handleOpenShift} className="p-6 space-y-4">
+        <form onSubmit={handleOpenShift} className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
           {error && (
             <div className="flex items-center gap-2 p-3 bg-rose-950/80 border border-rose-800 text-rose-300 text-xs rounded-xl">
               <AlertTriangle className="w-4 h-4 shrink-0" />

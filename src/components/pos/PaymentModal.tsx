@@ -208,10 +208,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, onPaymentSu
   }|CUR:UGX|SALE:${currentSaleId.slice(0, 8)}`;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150 flex flex-col md:flex-row">
+    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-800 w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150 flex flex-col md:flex-row my-auto max-h-[92vh]">
         {/* Left Column: Method Selector & Method-Specific Forms */}
-        <div className="w-full md:w-7/12 p-5 border-b md:border-b-0 md:border-r border-slate-800 space-y-4">
+        <div className="w-full md:w-7/12 p-4 sm:p-5 border-b md:border-b-0 md:border-r border-slate-800 space-y-4 overflow-y-auto">
           <div className="flex justify-between items-center">
             <div>
               <h3 className="text-base font-bold text-white uppercase tracking-tight flex items-center gap-2">
@@ -539,7 +539,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, onPaymentSu
         </div>
 
         {/* Right Column: Ledger, Decision Outcome Banner (YES / NO Actions) */}
-        <div className="w-full md:w-5/12 bg-slate-950/60 p-5 flex flex-col justify-between space-y-4">
+        <div className="w-full md:w-5/12 bg-slate-950/60 p-4 sm:p-5 flex flex-col justify-between space-y-4 overflow-y-auto">
           <div>
             <div className="flex justify-between items-center pb-3 border-b border-slate-800">
               <span className="text-xs font-semibold text-slate-400">Total Amount Due</span>

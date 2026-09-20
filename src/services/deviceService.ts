@@ -62,6 +62,24 @@ class DeviceService {
       if (setting) id = setting.value;
     }
 
+    // Auto-adoption fallback: if no setting exists yet, check if db.devices has an authorized device
+    if (!id) {
+      const existingDevice =
+        (await db.devices.where('is_authorized').equals(1).first()) ||
+        (await db.devices.toCollection().first());
+      if (existingDevice) {
+        id = existingDevice.id;
+        await db.settings.put({ key: SETTING_DEVICE_ID, value: id });
+        if (typeof window !== 'undefined' && window.localStorage) {
+          try {
+            window.localStorage.setItem(SETTING_DEVICE_ID, id);
+          } catch {
+            // ignore
+          }
+        }
+      }
+    }
+
     this.currentDeviceId = id;
     return id;
   }
@@ -83,7 +101,7 @@ class DeviceService {
       };
     }
 
-    const device = (await db.devices.get(deviceId)) || null;
+    const device = (await db.devices.get(deviceId)) || (await db.devices.toCollection().first()) || null;
     if (!device || !device.is_authorized) {
       return {
         isEnrolled: false,
@@ -94,11 +112,11 @@ class DeviceService {
       };
     }
 
-    const register = (await db.registers.get(device.register_id)) || null;
-    let store: Store | null = null;
-    if (register) {
-      store = (await db.stores.get('00000000-0000-0000-0000-000000000001')) || (await db.stores.toCollection().first()) || null;
+    let register = (await db.registers.get(device.register_id)) || null;
+    if (!register) {
+      register = (await db.registers.toCollection().first()) || null;
     }
+    let store = (await db.stores.get('00000000-0000-0000-0000-000000000001')) || (await db.stores.toCollection().first()) || null;
 
     return {
       isEnrolled: true,

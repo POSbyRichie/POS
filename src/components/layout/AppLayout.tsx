@@ -21,7 +21,7 @@ export function AppLayout({ children, onOpenSyncModal }: AppLayoutProps) {
         <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
           <Header onOpenSyncModal={onOpenSyncModal} />
           <SyncBanner onOpenSyncModal={onOpenSyncModal} />
-          <main className="flex-1 p-2 lg:p-3 overflow-hidden flex flex-col min-w-0">
+          <main className="flex-1 p-2 lg:p-3 pb-16 md:pb-3 overflow-hidden flex flex-col min-w-0">
             <WorkflowStepper />
             {children}
           </main>

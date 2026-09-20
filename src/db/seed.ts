@@ -1,10 +1,45 @@
 import { db } from './index';
 import { hashPin, generateSalt, generateUUID } from '../utils/id';
-import { User, Register, Device, Category, Product, Customer } from '../types';
+import { User, Register, Device, Category, Product, Customer, Store } from '../types';
 
 export async function seedDatabase(force: boolean = false) {
   const userCount = await db.users.count();
   if (userCount > 0 && !force) {
+    // Self-healing migration for existing databases: ensure store and primary device enrollment exist
+    const storeCount = await db.stores.count();
+    if (storeCount === 0) {
+      await db.stores.put({
+        id: '00000000-0000-0000-0000-000000000001',
+        name: 'Kampala Flagship Store',
+        code: 'KLA-01',
+        tagline: 'Enterprise Point of Sale',
+        address: 'Plot 12 Kampala Road, Kampala, Uganda',
+        phone: '+256 700 000000',
+        email: 'info@posbyrichie.online',
+        tax_id: 'TAX-UG-100200',
+        currency_code: 'UGX',
+        currency_symbol: 'UGX',
+        currency_decimals: 0,
+        loyalty_rate: 100,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    }
+
+    const enrolledSetting = await db.settings.get('pos_enrolled_device_id');
+    if (!enrolledSetting) {
+      const existingDevice = await db.devices.where('is_authorized').equals(1).first() || await db.devices.toCollection().first();
+      const deviceId = existingDevice ? existingDevice.id : 'dev-pos-terminal-01';
+      await db.settings.put({ key: 'pos_enrolled_device_id', value: deviceId });
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          window.localStorage.setItem('pos_enrolled_device_id', deviceId);
+        } catch {
+          // ignore
+        }
+      }
+    }
     return; // Already seeded
   }
 
@@ -12,6 +47,26 @@ export async function seedDatabase(force: boolean = false) {
     await db.delete();
     await db.open();
   }
+
+  // 0. Seed Store
+  const defaultStore: Store = {
+    id: '00000000-0000-0000-0000-000000000001',
+    name: 'Kampala Flagship Store',
+    code: 'KLA-01',
+    tagline: 'Enterprise Point of Sale',
+    address: 'Plot 12 Kampala Road, Kampala, Uganda',
+    phone: '+256 700 000000',
+    email: 'info@posbyrichie.online',
+    tax_id: 'TAX-UG-100200',
+    currency_code: 'UGX',
+    currency_symbol: 'UGX',
+    currency_decimals: 0,
+    loyalty_rate: 100,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+  await db.stores.put(defaultStore);
 
   // 1. Seed Roles & Users
   // Cashier PIN: 1234
@@ -90,13 +145,25 @@ export async function seedDatabase(force: boolean = false) {
 
   const defaultDevice: Device = {
     id: 'dev-pos-terminal-01',
-    device_name: 'Station 1 iPad/Desktop POS',
+    device_name: 'Counter Terminal 01',
     register_id: defaultRegister.id,
     is_authorized: true,
     enrolled_at: new Date().toISOString(),
     last_active_at: new Date().toISOString(),
   };
   await db.devices.put(defaultDevice);
+
+  // Auto-enroll primary workstation in settings so cashiers can immediately authenticate
+  await db.settings.put({ key: 'pos_enrolled_device_id', value: defaultDevice.id });
+  await db.settings.put({ key: 'active_register_id', value: defaultRegister.id });
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      window.localStorage.setItem('pos_enrolled_device_id', defaultDevice.id);
+      window.localStorage.setItem('pos_device_fingerprint', 'fp-counter-terminal-01');
+    } catch {
+      // ignore
+    }
+  }
 
   // 3. Seed Categories
   const catBeverages: Category = { id: 'cat-bev', name: 'Beverages', slug: 'beverages', sync_status: 'synced', updated_at: new Date().toISOString() };

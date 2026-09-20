@@ -7,10 +7,10 @@ class ConnectivityService {
   private listeners: Set<Listener> = new Set();
   private simulatedOffline: boolean = false;
   private checkIntervalId: any = null;
-  private pingUrl: string = 'https://www.google.com/generate_204'; // or Supabase endpoint
+  private pingUrl: string = '/manifest.webmanifest';
 
   constructor() {
-    this.status = navigator.onLine ? 'online' : 'offline';
+    this.status = typeof navigator !== 'undefined' && navigator.onLine ? 'online' : 'offline';
 
     if (typeof window !== 'undefined') {
       window.addEventListener('online', () => this.handleNetworkEvent(true));
@@ -53,7 +53,7 @@ class ConnectivityService {
     if (syncing) {
       this.status = 'syncing';
     } else {
-      this.status = navigator.onLine ? 'online' : 'offline';
+      this.status = typeof navigator !== 'undefined' && navigator.onLine ? 'online' : 'offline';
     }
     this.notify(this.status);
   }
@@ -85,23 +85,29 @@ class ConnectivityService {
 
   public async probeConnection(): Promise<boolean> {
     if (this.simulatedOffline) {
-      return false;
-    }
-
-    if (!navigator.onLine) {
       this.status = 'offline';
       this.notify(this.status);
       return false;
     }
 
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      this.status = 'offline';
+      this.notify(this.status);
+      return false;
+    }
+
+    if (typeof window === 'undefined') {
+      return true;
+    }
+
     try {
-      // Use HEAD request to ping endpoint with short timeout
+      // Use same-origin probe with cache buster to respect CSP and avoid CORS issues
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
-      
-      await fetch(this.pingUrl, {
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+      const probeUrl = `${this.pingUrl}?_probe=${Date.now()}`;
+      await fetch(probeUrl, {
         method: 'HEAD',
-        mode: 'no-cors',
         cache: 'no-store',
         signal: controller.signal,
       });
@@ -114,9 +120,18 @@ class ConnectivityService {
       }
       return true;
     } catch {
-      this.status = 'offline';
-      this.notify(this.status);
-      return false;
+      // Fallback: if browser says navigator.onLine is true, do not block POS
+      const isNavOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+      if (!isNavOnline) {
+        this.status = 'offline';
+        this.notify(this.status);
+        return false;
+      }
+      if (this.status !== 'syncing' && this.status !== 'sync_error') {
+        this.status = 'online';
+        this.notify(this.status);
+      }
+      return true;
     }
   }
 

@@ -71,8 +71,8 @@ export const CalculatorModal: React.FC<CalculatorModalProps> = ({ onClose }) => 
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
-      <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-xs shadow-2xl overflow-hidden text-white flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
+      <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-xs shadow-2xl overflow-hidden text-white flex flex-col my-auto max-h-[92vh]">
         {/* Header */}
         <div className="px-5 py-3.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Cashier Calculator</span>

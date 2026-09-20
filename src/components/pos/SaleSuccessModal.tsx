@@ -18,10 +18,10 @@ export const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({ onClose, onN
   const { sale } = lastCompletedSaleResult;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150 my-auto max-h-[92vh] flex flex-col">
         {/* Header */}
-        <div className="relative p-6 bg-gradient-to-b from-emerald-950/90 to-slate-900 border-b border-slate-800 text-center">
+        <div className="relative p-4 sm:p-6 bg-gradient-to-b from-emerald-950/90 to-slate-900 border-b border-slate-800 text-center shrink-0">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
@@ -29,18 +29,18 @@ export const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({ onClose, onN
           >
             <X className="w-4 h-4" />
           </button>
-          <div className="w-16 h-16 bg-emerald-500 text-slate-950 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-500/30">
-            <CheckCircle2 className="w-10 h-10" />
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-emerald-500 text-slate-950 rounded-2xl flex items-center justify-center mx-auto mb-2 sm:mb-3 shadow-lg shadow-emerald-500/30">
+            <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10" />
           </div>
           <span className="text-[10px] font-mono uppercase text-emerald-400 font-bold tracking-widest block mb-1">
             Authoritative Step 16
           </span>
-          <h3 className="text-xl font-black text-white tracking-tight">SALE COMPLETED</h3>
+          <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">SALE COMPLETED</h3>
           <p className="text-xs text-slate-400 mt-1">Inventory decremented &amp; report updated</p>
         </div>
 
         {/* Details card matching example from user prompt */}
-        <div className="p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
           <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 text-xs">
             <div className="flex justify-between">
               <span className="text-slate-400">Receipt:</span>

@@ -43,7 +43,7 @@ export function Header({ onOpenSyncModal }: HeaderProps) {
   ];
 
   return (
-    <header className="h-16 bg-slate-900 border-b border-slate-800 px-3 sm:px-4 flex items-center justify-between shadow-md shrink-0 gap-2">
+    <header className="h-14 sm:h-16 bg-slate-900 border-b border-slate-800 px-2 sm:px-4 flex items-center justify-between shadow-md shrink-0 gap-2">
       {/* Brand */}
       <div className="flex items-center gap-3 cursor-pointer shrink-0" onClick={() => navigate('/dashboard')}>
         <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-600 to-emerald-500 flex items-center justify-center font-black text-slate-950 shadow-md shadow-sky-500/20">

@@ -64,7 +64,8 @@ export const NavigationDock: React.FC<NavigationDockProps> = ({ onOpenSyncModal 
   ];
 
   return (
-    <aside className="w-16 bg-slate-950 border-r border-slate-900 flex flex-col items-center justify-between py-3 shrink-0 select-none z-30">
+    <>
+      <aside className="hidden md:flex w-16 bg-slate-950 border-r border-slate-900 flex-col items-center justify-between py-3 shrink-0 select-none z-30">
       {/* Top Controls */}
       <div className="flex flex-col items-center gap-4 w-full">
         {/* 1. Network / Online Indicator */}
@@ -237,7 +238,7 @@ export const NavigationDock: React.FC<NavigationDockProps> = ({ onOpenSyncModal 
                     setIsUserMenuOpen(false);
                     logout();
                   }}
-                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-950/40 transition"
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-950/40 transition cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>Lock / Logout</span>
@@ -248,5 +249,94 @@ export const NavigationDock: React.FC<NavigationDockProps> = ({ onOpenSyncModal 
         </div>
       </div>
     </aside>
+
+    {/* Mobile Bottom Dock (< md) */}
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-14 bg-slate-950/95 backdrop-blur-md border-t border-slate-800/90 z-40 flex items-center justify-around px-2 select-none shadow-2xl">
+      {/* 1. Network / Sync Modal */}
+      <button
+        type="button"
+        onClick={onOpenSyncModal}
+        className="p-2 rounded-xl text-slate-400 hover:text-white active:scale-95 transition"
+        title={isOnline ? 'Online' : 'Offline'}
+      >
+        {isOnline ? (
+          <div className="relative">
+            <Wifi className="w-5 h-5 text-emerald-400" />
+            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          </div>
+        ) : (
+          <div className="relative">
+            <WifiOff className="w-5 h-5 text-amber-400" />
+            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-400" />
+          </div>
+        )}
+      </button>
+
+      {/* 2. 9-Dot Launcher Popover Trigger */}
+      <button
+        type="button"
+        onClick={() => {
+          setIsAppMenuOpen(!isAppMenuOpen);
+          setIsUserMenuOpen(false);
+        }}
+        className={`p-2 rounded-xl active:scale-95 transition ${
+          isAppMenuOpen ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+        }`}
+        title="Modules"
+      >
+        <LayoutGrid className="w-5 h-5" />
+      </button>
+
+      {/* 3. Sales / Register */}
+      <button
+        type="button"
+        onClick={() => navigate('/pos')}
+        className={`p-2 rounded-xl active:scale-95 transition ${
+          currentPath === '/pos' || currentPath === '/sales' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+        }`}
+        title="POS Sales Register"
+      >
+        <ShoppingBag className="w-5 h-5" />
+      </button>
+
+      {/* 4. Held / Suspended Sales */}
+      <button
+        type="button"
+        onClick={() => setSuspendedSalesOpen(true)}
+        className="relative p-2 rounded-xl text-slate-400 hover:text-white active:scale-95 transition"
+        title="Parked Sales"
+      >
+        <Clock className="w-5 h-5" />
+        {suspendedSales.length > 0 && (
+          <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-amber-500 text-slate-950 font-bold text-[9px] flex items-center justify-center font-mono shadow-sm">
+            {suspendedSales.length}
+          </span>
+        )}
+      </button>
+
+      {/* 5. Calculator */}
+      <button
+        type="button"
+        onClick={() => setCalculatorOpen(true)}
+        className="p-2 rounded-xl text-slate-400 hover:text-white active:scale-95 transition"
+        title="Calculator"
+      >
+        <Calculator className="w-5 h-5" />
+      </button>
+
+      {/* 6. User Avatar */}
+      <button
+        type="button"
+        onClick={() => {
+          setIsUserMenuOpen(!isUserMenuOpen);
+          setIsAppMenuOpen(false);
+        }}
+        className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center text-indigo-300 font-bold text-xs active:scale-95 transition"
+        title="User Profile"
+      >
+        {(currentUser?.full_name || currentUser?.name || 'U').charAt(0).toUpperCase()}
+      </button>
+    </nav>
+  </>
   );
 };
