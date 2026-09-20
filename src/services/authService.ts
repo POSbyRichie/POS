@@ -102,6 +102,37 @@ class AuthService {
   }
 
   /**
+   * Updates cached offline credentials when user updates username, name, or password
+   */
+  public async updateCachedUserCredentials(user: User): Promise<void> {
+    const setting = await db.settings.get(SETTING_CACHED_OFFLINE_USERS);
+    if (!setting || !setting.value) return;
+    try {
+      const allCached: CachedOfflineUser[] = JSON.parse(setting.value);
+      let modified = false;
+      for (const c of allCached) {
+        if (c.id === user.id) {
+          c.username = user.username;
+          c.full_name = user.full_name;
+          c.pin_hash = user.pin_hash;
+          c.salt = user.salt;
+          c.last_authenticated_online_at = new Date().toISOString();
+          modified = true;
+        }
+      }
+      if (modified) {
+        await db.settings.put({
+          key: SETTING_CACHED_OFFLINE_USERS,
+          value: JSON.stringify(allCached),
+        });
+        logger.info('AuthService', `Updated offline authorization credentials for user ${user.username}`);
+      }
+    } catch (err) {
+      logger.error('AuthService', 'Failed to update cached offline credentials', err);
+    }
+  }
+
+  /**
    * Main login function implementing:
    * Login -> Role Verification -> Device Verification -> Register Selection -> Offline Auth Capability
    */

@@ -95,3 +95,6 @@ export function useRouter() {
 
 export { Route } from './Route';
 export type { RouteProps } from './Route';
+export { ProtectedRoute } from './ProtectedRoute';
+export type { ProtectedRouteProps } from './ProtectedRoute';
+

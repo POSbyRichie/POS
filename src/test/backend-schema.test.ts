@@ -109,28 +109,20 @@ describe('Backend Database Architecture & Schema Verification', () => {
     expect(rpcSql).toContain('\'already_processed\'');
   });
 
-  it('verifies seed data contains complete initial records across core entities', () => {
+  it('verifies production seed data contains required system roles and permissions and zero mock entities', () => {
     const seedSql = fs.readFileSync(seedPath, 'utf8');
 
-    expect(seedSql).toContain('INSERT INTO stores');
+    // Essential system configuration must be present
     expect(seedSql).toContain('INSERT INTO roles');
     expect(seedSql).toContain('INSERT INTO permissions');
     expect(seedSql).toContain('INSERT INTO role_permissions');
-    expect(seedSql).toContain('INSERT INTO profiles');
-    expect(seedSql).toContain('INSERT INTO registers');
-    expect(seedSql).toContain('INSERT INTO devices');
-    expect(seedSql).toContain('INSERT INTO categories');
-    expect(seedSql).toContain('INSERT INTO products');
-    expect(seedSql).toContain('INSERT INTO inventory_movements');
-    expect(seedSql).toContain('INSERT INTO customers');
-    expect(seedSql).toContain('INSERT INTO loyalty_accounts');
-    expect(seedSql).toContain('INSERT INTO shifts');
-    expect(seedSql).toContain('INSERT INTO sales');
-    expect(seedSql).toContain('INSERT INTO sale_items');
-    expect(seedSql).toContain('INSERT INTO payments');
-    expect(seedSql).toContain('INSERT INTO payment_items');
-    expect(seedSql).toContain('INSERT INTO receipts');
-    expect(seedSql).toContain('INSERT INTO audit_logs');
+
+    // Mock business data must be purged from production seed
+    expect(seedSql).not.toContain('INSERT INTO sales');
+    expect(seedSql).not.toContain('INSERT INTO sale_items');
+    expect(seedSql).not.toContain('INSERT INTO products');
+    expect(seedSql).not.toContain('INSERT INTO customers');
+    expect(seedSql).not.toContain('INSERT INTO shifts');
   });
 
   describe('Dexie.js Offline Client Schema Parity', () => {

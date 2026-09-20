@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { usePos } from '../../store/posStore';
 import { calculateCartTotals, formatMoney } from '../../utils/money';
+import { canApplyDiscount, CASHIER_MAX_DISCOUNT_PERCENT } from '../../utils/rbac';
 
 interface CartReviewProps {
   onProceedToPayment: () => void;
@@ -21,6 +22,7 @@ export const CartReview: React.FC<CartReviewProps> = ({
   onOpenCustomerModal,
 }) => {
   const {
+    currentUser,
     cartItems,
     selectedCustomer,
     cartDiscountPercent,
@@ -35,6 +37,7 @@ export const CartReview: React.FC<CartReviewProps> = ({
 
   const [editingNoteIndex, setEditingNoteIndex] = useState<number | null>(null);
   const [discountPercentInput, setDiscountPercentInput] = useState<string>('');
+  const [discountError, setDiscountError] = useState<string>('');
   const [isCartDiscountOpen, setIsCartDiscountOpen] = useState<boolean>(false);
 
   const totals = calculateCartTotals(cartItems, cartDiscountPercent, cartDiscountFixed);
@@ -42,9 +45,17 @@ export const CartReview: React.FC<CartReviewProps> = ({
   const handleApplyCartDiscount = (e: React.FormEvent) => {
     e.preventDefault();
     const percent = parseFloat(discountPercentInput) || 0;
+    const role = currentUser?.role || 'cashier';
+    const check = canApplyDiscount(role, percent);
+    if (!check.allowed) {
+      setDiscountError(check.reason || `Discounts exceeding ${CASHIER_MAX_DISCOUNT_PERCENT}% require Manager authorization.`);
+      return;
+    }
+    setDiscountError('');
     setCartDiscount(Math.min(100, Math.max(0, percent)), 0);
     setIsCartDiscountOpen(false);
   };
+
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl flex flex-col h-full shadow-2xl overflow-hidden">
@@ -241,35 +252,44 @@ export const CartReview: React.FC<CartReviewProps> = ({
         </div>
 
         {isCartDiscountOpen && (
-          <form onSubmit={handleApplyCartDiscount} className="flex gap-2 pt-1">
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={discountPercentInput}
-              onChange={e => setDiscountPercentInput(e.target.value)}
-              placeholder="e.g. 10%"
-              className="w-20 px-2 py-1 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white"
-            />
-            <button
-              type="submit"
-              className="px-2 py-1 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-bold"
-            >
-              Apply %
-            </button>
-            {cartDiscountPercent > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  setCartDiscount(0, 0);
-                  setIsCartDiscountOpen(false);
+          <div className="space-y-1 pt-1">
+            <form onSubmit={handleApplyCartDiscount} className="flex gap-2">
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={discountPercentInput}
+                onChange={e => {
+                  setDiscountPercentInput(e.target.value);
+                  setDiscountError('');
                 }}
-                className="px-2 py-1 bg-slate-800 text-rose-400 rounded-lg text-xs"
+                placeholder="e.g. 10%"
+                className="w-20 px-2 py-1 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white"
+              />
+              <button
+                type="submit"
+                className="px-2 py-1 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-bold cursor-pointer"
               >
-                Clear
+                Apply %
               </button>
+              {cartDiscountPercent > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCartDiscount(0, 0);
+                    setIsCartDiscountOpen(false);
+                    setDiscountError('');
+                  }}
+                  className="px-2 py-1 bg-slate-800 text-rose-400 rounded-lg text-xs cursor-pointer"
+                >
+                  Clear
+                </button>
+              )}
+            </form>
+            {discountError && (
+              <p className="text-[10px] text-rose-400 font-semibold">{discountError}</p>
             )}
-          </form>
+          </div>
         )}
 
         {/* Grand Total */}

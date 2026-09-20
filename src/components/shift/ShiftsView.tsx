@@ -43,22 +43,30 @@ export const ShiftsView: React.FC = () => {
   const [isClosing, setIsClosing] = useState<boolean>(false);
 
   const loadShiftData = useCallback(async () => {
+    const fetchShifts = async () => {
+      if (currentUser?.role === 'cashier') {
+        return db.shifts.where('cashier_id').equals(currentUser.id).reverse().limit(10).toArray();
+      }
+      return db.shifts.reverse().limit(10).toArray();
+    };
+
     if (activeShift) {
       try {
-        const [movements, allShifts] = await Promise.all([
+        const [movements, shifts] = await Promise.all([
           shiftService.getCashMovements(activeShift.id),
-          db.shifts.reverse().limit(10).toArray(),
+          fetchShifts(),
         ]);
         setCashMovements(movements);
-        setRecentShifts(allShifts);
+        setRecentShifts(shifts);
       } catch (err) {
         console.error('Failed to load shift cash movements:', err);
       }
     } else {
-      const allShifts = await db.shifts.reverse().limit(10).toArray();
-      setRecentShifts(allShifts);
+      const shifts = await fetchShifts();
+      setRecentShifts(shifts);
     }
-  }, [activeShift]);
+  }, [activeShift, currentUser]);
+
 
   useEffect(() => {
     loadShiftData();

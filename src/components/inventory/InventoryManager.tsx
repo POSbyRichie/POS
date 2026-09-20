@@ -602,7 +602,15 @@ export const InventoryManager: React.FC = () => {
             </div>
 
             <div className="divide-y divide-slate-800/80">
-              {filteredProducts.length === 0 ? (
+              {products.length === 0 ? (
+                <div className="p-12 text-center text-slate-400">
+                  <Package className="w-10 h-10 text-slate-600 mx-auto mb-2" />
+                  <p className="font-bold text-sm text-slate-300">No products in inventory yet</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Click &quot;+ New Product&quot; above to add your first product to the catalog.
+                  </p>
+                </div>
+              ) : filteredProducts.length === 0 ? (
                 <div className="p-10 text-center text-slate-500 text-xs">
                   No products match your search or filter criteria.
                 </div>
@@ -724,33 +732,43 @@ export const InventoryManager: React.FC = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {categories.map(cat => {
-              const count = products.filter(p => p.category_id === cat.id).length;
-              return (
-                <div
-                  key={cat.id}
-                  className="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between shadow-lg"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold"
-                      style={{ backgroundColor: cat.color || '#0284c7' }}
-                    >
-                      <Tag className="w-5 h-5" />
+          {categories.length === 0 ? (
+            <div className="p-12 text-center bg-slate-900 border border-slate-800 rounded-2xl text-slate-400">
+              <Tag className="w-10 h-10 text-slate-600 mx-auto mb-2" />
+              <p className="font-bold text-sm text-slate-300">No product categories yet</p>
+              <p className="text-xs text-slate-500 mt-1">
+                Click &quot;Add Category&quot; above to organize your catalog into departments.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {categories.map(cat => {
+                const count = products.filter(p => p.category_id === cat.id).length;
+                return (
+                  <div
+                    key={cat.id}
+                    className="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between shadow-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold"
+                        style={{ backgroundColor: cat.color || '#0284c7' }}
+                      >
+                        <Tag className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-white text-sm">{cat.name}</h4>
+                        <p className="text-[11px] text-slate-500 font-mono">Slug: {cat.slug}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-bold text-white text-sm">{cat.name}</h4>
-                      <p className="text-[11px] text-slate-500 font-mono">Slug: {cat.slug}</p>
-                    </div>
+                    <span className="px-2.5 py-1 bg-slate-800 text-slate-300 rounded-lg text-xs font-bold">
+                      {count} products
+                    </span>
                   </div>
-                  <span className="px-2.5 py-1 bg-slate-800 text-slate-300 rounded-lg text-xs font-bold">
-                    {count} products
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -763,7 +781,12 @@ export const InventoryManager: React.FC = () => {
           </div>
 
           <div className="divide-y divide-slate-800/80 max-h-[500px] overflow-y-auto">
-            {movements.map(m => {
+            {movements.length === 0 ? (
+              <div className="p-10 text-center text-slate-500 text-xs">
+                No stock movements recorded yet. Stock adjustments and sales movements will be logged here.
+              </div>
+            ) : (
+              movements.map(m => {
               const prod = products.find(p => p.id === m.product_id);
               return (
                 <div key={m.id} className="p-3 bg-slate-950/40 flex items-center justify-between text-xs">
@@ -795,7 +818,7 @@ export const InventoryManager: React.FC = () => {
                   </div>
                 </div>
               );
-            })}
+            }))}
           </div>
         </div>
       )}

@@ -21,6 +21,8 @@ import { Product } from '../../types';
 import { formatMoney } from '../../utils/money';
 import { OfflineIndicator } from './OfflineIndicator';
 import { CashMovementModal } from '../shift/CashMovementModal';
+import { CashierDashboard } from './CashierDashboard';
+import { InventoryManager } from '../inventory/InventoryManager';
 
 interface DashboardProps {
   onOpenSyncModal: () => void;
@@ -38,7 +40,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenSyncModal }) => {
     setClosingShiftOpen,
   } = usePos();
 
+  // Role-based dashboard specialization
+  if (currentUser?.role === 'cashier') {
+    return <CashierDashboard onOpenSyncModal={onOpenSyncModal} />;
+  }
+
+  if (currentUser?.role === 'inventory_manager') {
+    return <InventoryManager />;
+  }
+
+
   const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString());
+  const [totalProductsCount, setTotalProductsCount] = useState<number>(0);
   const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
   const [todaySalesCount, setTodaySalesCount] = useState<number>(0);
   const [todaySalesAmount, setTodaySalesAmount] = useState<number>(0);
@@ -53,6 +66,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenSyncModal }) => {
   const loadDashboardMetrics = async () => {
     // 1. Fetch low stock items
     const allProducts = await db.products.where('is_active').equals(1).toArray();
+    setTotalProductsCount(allProducts.length);
     const lowStock = allProducts.filter(p => p.stock_quantity <= p.min_stock_level);
     setLowStockProducts(lowStock);
 
@@ -180,7 +194,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenSyncModal }) => {
             <span className="text-xs text-slate-400">{lowStockProducts.length} items flagged</span>
           </div>
 
-          {lowStockProducts.length === 0 ? (
+          {totalProductsCount === 0 ? (
+            <div className="p-8 text-center bg-slate-950/50 rounded-xl border border-slate-800/60">
+              <p className="text-xs text-slate-400">No inventory records found. Add products to your catalog to monitor stock levels.</p>
+            </div>
+          ) : lowStockProducts.length === 0 ? (
             <div className="p-8 text-center bg-slate-950/50 rounded-xl border border-slate-800/60">
               <p className="text-xs text-slate-400">All products have healthy inventory levels.</p>
             </div>

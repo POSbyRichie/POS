@@ -103,8 +103,16 @@ export class ProductRepository extends BaseRepository<Product, string> {
     params: CreateProductParams,
     context?: { userId?: string; registerId?: string; shiftId?: string }
   ): Promise<Product> {
+    if (context?.userId) {
+      const user = await this.db.users.get(context.userId);
+      if (user?.role === 'cashier') {
+        throw new Error('Unauthorized: Cashiers are not permitted to create products.');
+      }
+    }
+
     const {
       sku,
+
       barcode,
       name,
       category_id,
@@ -221,11 +229,19 @@ export class ProductRepository extends BaseRepository<Product, string> {
   /**
    * Updates an existing product and enqueues sync mutation
    */
-  async updateProduct(id: string, changes: Partial<Omit<Product, 'id'>>): Promise<Product> {
+  async updateProduct(id: string, changes: Partial<Omit<Product, 'id'>>, userId?: string): Promise<Product> {
+    if (userId) {
+      const user = await this.db.users.get(userId);
+      if (user?.role === 'cashier') {
+        throw new Error('Unauthorized: Cashiers are not permitted to modify products.');
+      }
+    }
+
     const existing = await this.get(id);
     if (!existing) {
       throw new Error(`Product not found: ${id}`);
     }
+
 
     if (changes.sku && changes.sku !== existing.sku) {
       const duplicateSku = await this.getBySku(changes.sku);

@@ -26,4 +26,6 @@ dist-ssr
 # Environment files
 .env
 .env.production
+.env.development
+.env.test
 .netlify

@@ -10,8 +10,12 @@ export interface AppConfig {
 }
 
 export function loadEnv(): AppConfig {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || null;
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || null;
+  const isTest =
+    import.meta.env.MODE === 'test' ||
+    (typeof process !== 'undefined' && (process.env.NODE_ENV === 'test' || Boolean(process.env.VITEST)));
+
+  const supabaseUrl = isTest ? null : (import.meta.env.VITE_SUPABASE_URL || null);
+  const supabaseAnonKey = isTest ? null : (import.meta.env.VITE_SUPABASE_ANON_KEY || null);
 
   const isValidSupabase = Boolean(
     supabaseUrl &&

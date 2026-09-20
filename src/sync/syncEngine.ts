@@ -79,6 +79,12 @@ export class SyncEngine {
   }
 
   public initSupabase(): void {
+    const isTest = typeof process !== 'undefined' && (process.env.NODE_ENV === 'test' || process.env.VITEST);
+    if (isTest) {
+      this.supabase = null;
+      return;
+    }
+
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 

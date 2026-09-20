@@ -53,6 +53,7 @@ export interface PosState {
   isSuspendedSalesOpen: boolean;
   isCalculatorOpen: boolean;
   isIssueLoyaltyCardOpen: boolean;
+  isUserProfileOpen: boolean;
 }
 
 type PosStoreListener = (state: PosState) => void;
@@ -84,6 +85,7 @@ class PosStore {
     isSuspendedSalesOpen: false,
     isCalculatorOpen: false,
     isIssueLoyaltyCardOpen: false,
+    isUserProfileOpen: false,
   };
 
   private listeners: Set<PosStoreListener> = new Set();
@@ -121,7 +123,11 @@ class PosStore {
       const activeShift = await db.shifts.where('status').equals('open').first();
 
       let activeUser: User | null = null;
-      if (activeShift) {
+      const storedUserId = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('pos_active_user_id') : null;
+      if (storedUserId) {
+        activeUser = (await db.users.get(storedUserId)) || null;
+      }
+      if (!activeUser && activeShift) {
         activeUser = (await db.users.get(activeShift.cashier_id)) || null;
       }
 
@@ -130,8 +136,8 @@ class PosStore {
         activeDevice: device || null,
         activeShift: activeShift || null,
         currentUser: activeUser,
-        activeWorkflowStep: activeUser && activeShift ? 3 : 1, // If shift open -> Dashboard, else Login
-        activeView: activeUser && activeShift ? 'dashboard' : 'pos',
+        activeWorkflowStep: activeUser && activeShift ? 3 : 1, // If shift open -> Dashboard/POS, else Login
+        activeView: activeUser && activeShift ? (activeUser.role === 'cashier' ? 'pos' : 'dashboard') : 'pos',
       });
     } catch (e) {
       console.warn('Init session error:', e);
@@ -399,7 +405,14 @@ class PosStore {
     this.setState({ isIssueLoyaltyCardOpen: open });
   }
 
+  public setUserProfileOpen(open: boolean): void {
+    this.setState({ isUserProfileOpen: open });
+  }
+
   public logout() {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('pos_active_user_id');
+    }
     this.setState({
       currentUser: null,
       activeWorkflowStep: 1, // Return to Cashier Login
@@ -446,7 +459,17 @@ export function usePos() {
     setSuspendedSalesOpen: (open: boolean) => posStore.setSuspendedSalesOpen(open),
     setCalculatorOpen: (open: boolean) => posStore.setCalculatorOpen(open),
     setIssueLoyaltyCardOpen: (open: boolean) => posStore.setIssueLoyaltyCardOpen(open),
-    setCurrentUser: (user: User | null) => posStore.setState({ currentUser: user }),
+    setUserProfileOpen: (open: boolean) => posStore.setUserProfileOpen(open),
+    setCurrentUser: (user: User | null) => {
+      if (typeof sessionStorage !== 'undefined') {
+        if (user) {
+          sessionStorage.setItem('pos_active_user_id', user.id);
+        } else {
+          sessionStorage.removeItem('pos_active_user_id');
+        }
+      }
+      posStore.setState({ currentUser: user });
+    },
     setActiveShift: (shift: Shift | null) => posStore.setState({ activeShift: shift }),
     setActiveRegister: (register: Register | null) => posStore.setState({ activeRegister: register }),
     setActiveDevice: (device: Device | null) => posStore.setState({ activeDevice: device }),

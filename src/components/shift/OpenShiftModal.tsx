@@ -5,8 +5,10 @@ import { db } from '../../db';
 import { Shift } from '../../types';
 import { generateUUID } from '../../utils/id';
 import { parseToMinorUnits, formatMoney } from '../../utils/money';
+import { useRouter } from '../../routes/router';
 
 export const OpenShiftModal: React.FC = () => {
+  const { navigate } = useRouter();
   const {
     currentUser,
     activeRegister,
@@ -16,6 +18,7 @@ export const OpenShiftModal: React.FC = () => {
     setActiveWorkflowStep,
     setActiveView,
   } = usePos();
+
 
   const [openingFloatStr, setOpeningFloatStr] = useState<string>('50000'); // Default float UGX 50,000
   const [notes, setNotes] = useState<string>('');
@@ -84,11 +87,19 @@ export const OpenShiftModal: React.FC = () => {
         created_at: now,
       });
 
-      // Step 2 Completed -> Proceed to Step 3: DASHBOARD
+      // Step 2 Completed -> Proceed directly to sales workstation for cashiers
       setActiveShift(newShift);
       setOpeningShiftOpen(false);
-      setActiveWorkflowStep(3);
-      setActiveView('dashboard');
+      if (currentUser.role === 'cashier') {
+        setActiveWorkflowStep(4);
+        setActiveView('pos');
+        navigate('/pos');
+      } else {
+        setActiveWorkflowStep(3);
+        setActiveView('dashboard');
+        navigate('/dashboard');
+      }
+
     } catch (err: any) {
       setError(err.message || 'Failed to open shift.');
     } finally {

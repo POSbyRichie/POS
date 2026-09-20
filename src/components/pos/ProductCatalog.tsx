@@ -265,7 +265,15 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ onProceedToRevie
 
       {/* Product Grid (Step 5 & 6) */}
       <div className="flex-1 overflow-y-auto pr-1">
-        {filteredProducts.length === 0 ? (
+        {products.length === 0 ? (
+          <div className="p-12 text-center bg-slate-900 border border-slate-800 rounded-2xl">
+            <Package className="w-10 h-10 text-slate-600 mx-auto mb-2" />
+            <h4 className="text-sm font-bold text-slate-300">No products in catalog yet</h4>
+            <p className="text-xs text-slate-500 mt-1">
+              Add products in Inventory to start ringing up sales at checkout.
+            </p>
+          </div>
+        ) : filteredProducts.length === 0 ? (
           <div className="p-12 text-center bg-slate-900 border border-slate-800 rounded-2xl">
             <Package className="w-10 h-10 text-slate-600 mx-auto mb-2" />
             <h4 className="text-sm font-bold text-slate-300">No products found</h4>

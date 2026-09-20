@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { AppLayout } from './components/layout/AppLayout';
-import { Route, useRouter } from './routes/router';
-import { seedDatabase } from './db/seed';
+import { ProtectedRoute, useRouter } from './routes/router';
+
+import { initializeProductionSystem } from './db/init';
+
 
 // Components
 import { Dashboard } from './components/dashboard/Dashboard';
@@ -25,6 +27,7 @@ import { CloseShiftModal } from './components/shift/CloseShiftModal';
 import { CalculatorModal } from './components/pos/CalculatorModal';
 import { SuspendedSalesModal } from './components/pos/SuspendedSalesModal';
 import { IssueLoyaltyCardModal } from './components/pos/IssueLoyaltyCardModal';
+import { UserProfileModal } from './components/auth/UserProfileModal';
 import { usePos } from './store/posStore';
 
 export function App() {
@@ -37,8 +40,9 @@ export function App() {
     isReceiptModalOpen,
     isCustomerModalOpen,
     isSuspendedSalesOpen,
-    isCalculatorOpen,
+    isCalculatorOpen: isCalculatorOpen,
     isIssueLoyaltyCardOpen,
+    isUserProfileOpen,
     setActiveWorkflowStep,
     proceedToNextCustomer,
     setClosingShiftOpen,
@@ -48,6 +52,7 @@ export function App() {
     setSuspendedSalesOpen,
     setCalculatorOpen,
     setIssueLoyaltyCardOpen,
+    setUserProfileOpen,
   } = usePos();
 
   const { navigate } = useRouter();
@@ -57,7 +62,7 @@ export function App() {
 
   useEffect(() => {
     async function init() {
-      await seedDatabase();
+      await initializeProductionSystem();
       setIsInitialized(true);
     }
     init();
@@ -100,80 +105,80 @@ export function App() {
   return (
     <AppLayout onOpenSyncModal={() => setIsSyncModalOpen(true)}>
       {/* 1. Route: Dashboard */}
-      <Route path="/">
+      <ProtectedRoute path="/">
         <div className="flex-1 overflow-y-auto pr-1">
           <Dashboard onOpenSyncModal={() => setIsSyncModalOpen(true)} />
         </div>
-      </Route>
+      </ProtectedRoute>
 
-      <Route path="/dashboard">
+      <ProtectedRoute path="/dashboard">
         <div className="flex-1 overflow-y-auto pr-1">
           <Dashboard onOpenSyncModal={() => setIsSyncModalOpen(true)} />
         </div>
-      </Route>
+      </ProtectedRoute>
 
       {/* 2. Route: Sales (New Sale, Scan, Search, Cart, Customer, Payment, Receipt) */}
-      <Route path="/sales">
+      <ProtectedRoute path="/sales">
         <SalesView />
-      </Route>
+      </ProtectedRoute>
 
-      <Route path="/pos">
+      <ProtectedRoute path="/pos">
         <SalesView />
-      </Route>
+      </ProtectedRoute>
 
       {/* 3. Route: Inventory (Products, Categories, Stock, Stock In, Adjustments, Low Stock) */}
-      <Route path="/inventory">
+      <ProtectedRoute path="/inventory">
         <div className="flex-1 overflow-y-auto pr-1">
           <InventoryManager />
         </div>
-      </Route>
+      </ProtectedRoute>
 
       {/* 4. Route: Customers (Customers Directory & Loyalty Points Audit Trail) */}
-      <Route path="/customers">
+      <ProtectedRoute path="/customers">
         <div className="flex-1 overflow-y-auto pr-1">
           <CustomersView />
         </div>
-      </Route>
+      </ProtectedRoute>
 
       {/* 5. Route: Shifts (Open Shift, Current Shift Metrics & Movements, Close Shift Variance) */}
-      <Route path="/shifts">
+      <ProtectedRoute path="/shifts">
         <div className="flex-1 overflow-y-auto pr-1">
           <ShiftsView />
         </div>
-      </Route>
+      </ProtectedRoute>
 
       {/* 6. Route: Reports (Sales, Inventory, Cashier, Payments, Shifts) */}
-      <Route path="/reports">
+      <ProtectedRoute path="/reports">
         <div className="flex-1 overflow-y-auto pr-1">
           <ReportsView />
         </div>
-      </Route>
+      </ProtectedRoute>
 
       {/* 7. Route: Administration (Users, Roles, Registers, Devices, Settings) */}
-      <Route path="/admin">
+      <ProtectedRoute path="/admin">
         <div className="flex-1 overflow-y-auto pr-1">
           <AdministrationView />
         </div>
-      </Route>
+      </ProtectedRoute>
 
-      <Route path="/administration">
+      <ProtectedRoute path="/administration">
         <div className="flex-1 overflow-y-auto pr-1">
           <AdministrationView />
         </div>
-      </Route>
+      </ProtectedRoute>
 
-      <Route path="/settings">
+      <ProtectedRoute path="/settings">
         <div className="flex-1 overflow-y-auto pr-1">
           <AdministrationView />
         </div>
-      </Route>
+      </ProtectedRoute>
 
       {/* 8. Route: System (Offline Status, Sync Center, Sync Errors, Audit Logs) */}
-      <Route path="/system">
+      <ProtectedRoute path="/system">
         <div className="flex-1 overflow-y-auto pr-1">
           <SystemView />
         </div>
-      </Route>
+      </ProtectedRoute>
 
       {/* Overlays & Modals */}
       {isClosingShiftOpen && (
@@ -238,6 +243,7 @@ export function App() {
       {isSuspendedSalesOpen && <SuspendedSalesModal onClose={() => setSuspendedSalesOpen(false)} />}
       {isCalculatorOpen && <CalculatorModal onClose={() => setCalculatorOpen(false)} />}
       {isIssueLoyaltyCardOpen && <IssueLoyaltyCardModal onClose={() => setIssueLoyaltyCardOpen(false)} />}
+      {isUserProfileOpen && <UserProfileModal onClose={() => setUserProfileOpen(false)} />}
     </AppLayout>
   );
 }

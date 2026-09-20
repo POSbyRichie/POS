@@ -38,6 +38,7 @@ export interface Device {
 
 export interface Register {
   id: string; // UUID
+  store_id?: string;
   register_name: string;
   branch_name: string;
   is_active: boolean;

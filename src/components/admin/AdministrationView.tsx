@@ -283,7 +283,12 @@ export const AdministrationView: React.FC = () => {
           </div>
 
           <div className="divide-y divide-slate-800/80">
-            {users.map(u => (
+            {users.length === 0 ? (
+              <div className="p-10 text-center text-xs text-slate-500">
+                No staff users registered yet. Click &quot;Add User&quot; above to create team member accounts.
+              </div>
+            ) : (
+              users.map(u => (
               <div key={u.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-slate-800/30 transition text-xs">
                 <div className="col-span-4">
                   <span className="font-bold text-white text-sm block">{u.full_name}</span>
@@ -313,7 +318,7 @@ export const AdministrationView: React.FC = () => {
                   {u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}
                 </div>
               </div>
-            ))}
+            )))}
           </div>
         </div>
       )}
@@ -424,7 +429,12 @@ export const AdministrationView: React.FC = () => {
           </div>
 
           <div className="divide-y divide-slate-800/80">
-            {registers.map(reg => (
+            {registers.length === 0 ? (
+              <div className="p-10 text-center text-xs text-slate-500">
+                No registers configured yet. Click &quot;Add Register&quot; above to provision a register.
+              </div>
+            ) : (
+              registers.map(reg => (
               <div key={reg.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-slate-800/30 transition text-xs">
                 <div className="col-span-4">
                   <span className="font-bold text-white text-sm block">{reg.register_name}</span>
@@ -438,7 +448,7 @@ export const AdministrationView: React.FC = () => {
                   </span>
                 </div>
               </div>
-            ))}
+            )))}
           </div>
         </div>
       )}

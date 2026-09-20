@@ -2,6 +2,34 @@ import { db } from './index';
 import { hashPin, generateSalt, generateUUID } from '../utils/id';
 import { User, Register, Device, Category, Product, Customer, Store } from '../types';
 
+export const INSPIRATION_PRODUCTS = [
+  { name: 'Indomie noodles 70g', sku: 'IND-70G', barcode: '89988662001', category_id: 'cat-gro', cost_price: 180, selling_price: 250, stock_quantity: 15, min_stock_level: 5, tax_rate: 0, unit: 'pack' },
+  { name: 'Peak Milk Evaporated 160g', sku: 'PEAK-160G', barcode: '89988662002', category_id: 'cat-dai', cost_price: 420, selling_price: 550, stock_quantity: 20, min_stock_level: 5, tax_rate: 0, unit: 'tin' },
+  { name: 'Golden penny Spaghetti 500g', sku: 'GP-SPAG-500', barcode: '89988662003', category_id: 'cat-gro', cost_price: 700, selling_price: 900, stock_quantity: 14, min_stock_level: 5, tax_rate: 0, unit: 'pack' },
+  { name: 'Milo Refill 500g', sku: 'MILO-500G', barcode: '89988662004', category_id: 'cat-bev', cost_price: 1900, selling_price: 2500, stock_quantity: 16, min_stock_level: 5, tax_rate: 0, unit: 'pack' },
+  { name: 'Power Oil 750ml', sku: 'PWR-OIL-750', barcode: '89988662005', category_id: 'cat-gro', cost_price: 1400, selling_price: 1800, stock_quantity: 12, min_stock_level: 5, tax_rate: 0, unit: 'bottle' },
+  { name: 'Dangote Sugar 1kg', sku: 'DNG-SUG-1KG', barcode: '89988662006', category_id: 'cat-gro', cost_price: 950, selling_price: 1200, stock_quantity: 8, min_stock_level: 5, tax_rate: 0, unit: 'pack' },
+  { name: 'Dano Milk Powder 800g', sku: 'DANO-800G', barcode: '89988662007', category_id: 'cat-dai', cost_price: 2500, selling_price: 3200, stock_quantity: 15, min_stock_level: 5, tax_rate: 0, unit: 'tin' },
+  { name: 'Gino Tomato Paste 70g', sku: 'GINO-70G', barcode: '89988662008', category_id: 'cat-gro', cost_price: 140, selling_price: 200, stock_quantity: 25, min_stock_level: 5, tax_rate: 0, unit: 'sachet' },
+  { name: 'Close Up Toothpaste 140g', sku: 'CLSUP-140G', barcode: '89988662009', category_id: 'cat-per', cost_price: 480, selling_price: 650, stock_quantity: 18, min_stock_level: 5, tax_rate: 0, unit: 'tube' },
+  { name: 'Coca-Cola 50cl', sku: 'COKE-50CL', barcode: '89988662010', category_id: 'cat-bev', cost_price: 250, selling_price: 350, stock_quantity: 15, min_stock_level: 5, tax_rate: 0, unit: 'bottle' },
+  { name: 'Fanta 50cl', sku: 'FANTA-50CL', barcode: '89988662011', category_id: 'cat-bev', cost_price: 250, selling_price: 350, stock_quantity: 14, min_stock_level: 5, tax_rate: 0, unit: 'bottle' },
+  { name: 'Sprite 50cl', sku: 'SPRITE-50CL', barcode: '89988662012', category_id: 'cat-bev', cost_price: 250, selling_price: 350, stock_quantity: 15, min_stock_level: 5, tax_rate: 0, unit: 'bottle' },
+  { name: 'Eva Water 75cl', sku: 'EVA-75CL', barcode: '89988662013', category_id: 'cat-bev', cost_price: 180, selling_price: 250, stock_quantity: 10, min_stock_level: 5, tax_rate: 0, unit: 'bottle' },
+  { name: 'Pepsi 50cl', sku: 'PEPSI-50CL', barcode: '89988662014', category_id: 'cat-bev', cost_price: 220, selling_price: 300, stock_quantity: 18, min_stock_level: 5, tax_rate: 0, unit: 'bottle' },
+  { name: 'Nestle Pure Life 60cl', sku: 'NEST-60CL', barcode: '89988662015', category_id: 'cat-bev', cost_price: 140, selling_price: 200, stock_quantity: 12, min_stock_level: 5, tax_rate: 0, unit: 'bottle' },
+  { name: 'Maltina 33cl', sku: 'MALT-33CL', barcode: '89988662016', category_id: 'cat-bev', cost_price: 300, selling_price: 400, stock_quantity: 5, min_stock_level: 5, tax_rate: 0, unit: 'can' },
+  { name: 'Hollandia Yoghurt 1L', sku: 'HOLL-1L', barcode: '89988662017', category_id: 'cat-dai', cost_price: 1150, selling_price: 1500, stock_quantity: 16, min_stock_level: 5, tax_rate: 0, unit: 'carton' },
+  { name: 'Chivita 100% 1L', sku: 'CHIV-1L', barcode: '89988662018', category_id: 'cat-bev', cost_price: 1050, selling_price: 1400, stock_quantity: 8, min_stock_level: 5, tax_rate: 0, unit: 'carton' },
+  { name: '5 Alive Pulpy Orange 85cl', sku: '5ALV-85CL', barcode: '89988662019', category_id: 'cat-bev', cost_price: 850, selling_price: 1100, stock_quantity: 14, min_stock_level: 5, tax_rate: 0, unit: 'bottle' },
+  { name: 'Bigi Cola 50cl', sku: 'BIGI-50CL', barcode: '89988662020', category_id: 'cat-bev', cost_price: 180, selling_price: 250, stock_quantity: 7, min_stock_level: 5, tax_rate: 0, unit: 'bottle' },
+  { name: 'Titus Sardine 125g', sku: 'TITUS-125G', barcode: '89988662021', category_id: 'cat-gro', cost_price: 720, selling_price: 950, stock_quantity: 11, min_stock_level: 5, tax_rate: 0, unit: 'tin' },
+  { name: 'Geisha Mackerel in Tomato Sauce', sku: 'GEISHA-MACK', barcode: '89988662022', category_id: 'cat-gro', cost_price: 850, selling_price: 1100, stock_quantity: 9, min_stock_level: 5, tax_rate: 0, unit: 'tin' },
+  { name: 'Honeywell Wheat Meal 1kg', sku: 'HW-WHEAT-1KG', barcode: '89988662023', category_id: 'cat-gro', cost_price: 1000, selling_price: 1300, stock_quantity: 15, min_stock_level: 5, tax_rate: 0, unit: 'pack' },
+  { name: 'Ariel Detergent Powder 400g', sku: 'ARIEL-400G', barcode: '89988662024', category_id: 'cat-per', cost_price: 650, selling_price: 850, stock_quantity: 13, min_stock_level: 5, tax_rate: 0, unit: 'pack' },
+  { name: 'Sunlight Dishwashing Liquid 500ml', sku: 'SUN-DISH-500', barcode: '89988662025', category_id: 'cat-per', cost_price: 550, selling_price: 750, stock_quantity: 10, min_stock_level: 5, tax_rate: 0, unit: 'bottle' },
+];
+
 export async function seedDatabase(force: boolean = false) {
   const userCount = await db.users.count();
   if (userCount > 0 && !force) {
@@ -25,6 +53,21 @@ export async function seedDatabase(force: boolean = false) {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
+    }
+
+    // Ensure inspiration products exist in existing database
+    const existingRefProduct = await db.products.where('sku').equals('IND-70G').first();
+    if (!existingRefProduct) {
+      const prodsToPut: Product[] = INSPIRATION_PRODUCTS.map(p => ({
+        ...p,
+        id: generateUUID(),
+        description: p.name,
+        is_active: true,
+        sync_status: 'synced',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }));
+      await db.products.bulkPut(prodsToPut);
     }
 
     const enrolledSetting = await db.settings.get('pos_enrolled_device_id');
@@ -358,7 +401,20 @@ export async function seedDatabase(force: boolean = false) {
     },
   ];
 
-  await db.products.bulkPut(defaultProducts);
+  const allProductsToSeed: Product[] = [
+    ...INSPIRATION_PRODUCTS.map(p => ({
+      ...p,
+      id: generateUUID(),
+      description: p.name,
+      is_active: true,
+      sync_status: 'synced' as const,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })),
+    ...defaultProducts,
+  ];
+
+  await db.products.bulkPut(allProductsToSeed);
 
   // 5. Seed Customers
   const defaultCustomers: Customer[] = [

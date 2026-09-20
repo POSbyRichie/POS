@@ -36,11 +36,19 @@ export class InventoryRepository extends BaseRepository<InventoryMovement, strin
     userId: string,
     notes?: string
   ): Promise<InventoryMovement> {
+    if (userId) {
+      const user = await this.db.users.get(userId);
+      if (user?.role === 'cashier') {
+        throw new Error('Unauthorized: Cashiers are not permitted to perform manual stock adjustments.');
+      }
+    }
+
     let resultMovement: InventoryMovement | null = null;
     const now = new Date().toISOString();
 
     await this.db.transaction('rw', [this.db.products, this.db.inventoryMovements, this.db.syncQueue], async () => {
       const product = await this.db.products.get(productId);
+
       if (!product) throw new Error('Product not found');
 
       const previousQuantity = product.stock_quantity;
