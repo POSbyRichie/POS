@@ -13,6 +13,8 @@ import {
   FileText,
   Cloud,
   Database,
+  Check,
+  X,
 } from 'lucide-react';
 import { db } from '../../db';
 import { User, Register, Device, Store, UserRole } from '../../types';
@@ -330,10 +332,22 @@ export const AdministrationView: React.FC = () => {
               Unrestricted access to all subsystem operations, user administration, database schema, role changes, and system settings.
             </p>
             <ul className="text-xs text-slate-300 space-y-2 border-t border-slate-800 pt-3">
-              <li className="flex items-center gap-2 text-emerald-400 font-medium">✓ User and Register Management</li>
-              <li className="flex items-center gap-2 text-emerald-400 font-medium">✓ Store &amp; Sync Diagnostics</li>
-              <li className="flex items-center gap-2 text-emerald-400 font-medium">✓ Price Overrides &amp; Full Refunds</li>
-              <li className="flex items-center gap-2 text-emerald-400 font-medium">✓ Shift Reconciliation Auditing</li>
+              <li className="flex items-center gap-2 text-emerald-400 font-medium">
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                User and Register Management
+              </li>
+              <li className="flex items-center gap-2 text-emerald-400 font-medium">
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                Store &amp; Sync Diagnostics
+              </li>
+              <li className="flex items-center gap-2 text-emerald-400 font-medium">
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                Price Overrides &amp; Full Refunds
+              </li>
+              <li className="flex items-center gap-2 text-emerald-400 font-medium">
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                Shift Reconciliation Auditing
+              </li>
             </ul>
           </div>
 
@@ -348,10 +362,22 @@ export const AdministrationView: React.FC = () => {
               Daily floor operations oversight, shift drawer approvals, stock inventory movements, and sales performance reports.
             </p>
             <ul className="text-xs text-slate-300 space-y-2 border-t border-slate-800 pt-3">
-              <li className="flex items-center gap-2 text-emerald-400 font-medium">✓ Shift Open, Close &amp; Drops</li>
-              <li className="flex items-center gap-2 text-emerald-400 font-medium">✓ Inventory Adjustments &amp; Restock</li>
-              <li className="flex items-center gap-2 text-emerald-400 font-medium">✓ Line &amp; Cart Discounts</li>
-              <li className="flex items-center gap-2 text-slate-500 font-medium">✗ User Account Provisioning</li>
+              <li className="flex items-center gap-2 text-emerald-400 font-medium">
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                Shift Open, Close &amp; Drops
+              </li>
+              <li className="flex items-center gap-2 text-emerald-400 font-medium">
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                Inventory Adjustments &amp; Restock
+              </li>
+              <li className="flex items-center gap-2 text-emerald-400 font-medium">
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                Line &amp; Cart Discounts
+              </li>
+              <li className="flex items-center gap-2 text-slate-500 font-medium">
+                <X className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                User Account Provisioning
+              </li>
             </ul>
           </div>
 
@@ -366,10 +392,22 @@ export const AdministrationView: React.FC = () => {
               High-speed checkout operations, barcode scanning, cart processing, receipt generation, and customer loyalty attachment.
             </p>
             <ul className="text-xs text-slate-300 space-y-2 border-t border-slate-800 pt-3">
-              <li className="flex items-center gap-2 text-emerald-400 font-medium">✓ New Sale &amp; Barcode Scanning</li>
-              <li className="flex items-center gap-2 text-emerald-400 font-medium">✓ Cash, Card &amp; Mobile Payments</li>
-              <li className="flex items-center gap-2 text-emerald-400 font-medium">✓ Receipt Print &amp; Reprints</li>
-              <li className="flex items-center gap-2 text-slate-500 font-medium">✗ Manual Stock Decrements</li>
+              <li className="flex items-center gap-2 text-emerald-400 font-medium">
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                New Sale &amp; Barcode Scanning
+              </li>
+              <li className="flex items-center gap-2 text-emerald-400 font-medium">
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                Cash, Card &amp; Mobile Payments
+              </li>
+              <li className="flex items-center gap-2 text-emerald-400 font-medium">
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                Receipt Print &amp; Reprints
+              </li>
+              <li className="flex items-center gap-2 text-slate-500 font-medium">
+                <X className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                Manual Stock Decrements
+              </li>
             </ul>
           </div>
         </div>
@@ -459,14 +497,14 @@ export const AdministrationView: React.FC = () => {
               <div className="flex justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
                 <span className="text-slate-400">Configured:</span>
                 <span className={`font-bold font-mono ${env.isSupabaseConfigured ? 'text-emerald-400' : 'text-amber-400'}`}>
-                  {env.isSupabaseConfigured ? 'YES (Active)' : 'OFFLINE MODE (Unconfigured)'}
+                  {env.isSupabaseConfigured ? 'Connected' : 'Local Storage Mode'}
                 </span>
               </div>
 
               <div className="flex justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
                 <span className="text-slate-400">URL:</span>
                 <span className="font-mono text-slate-300 truncate max-w-[180px]">
-                  {env.supabaseUrl || 'None (Local IndexedDB only)'}
+                  {env.supabaseUrl || 'Local Storage Mode'}
                 </span>
               </div>
             </div>
@@ -478,7 +516,7 @@ export const AdministrationView: React.FC = () => {
               className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl text-xs flex items-center justify-center gap-2 transition border border-slate-700"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isTestingCloud ? 'animate-spin' : ''}`} />
-              Test Supabase Connection Probe
+              Test Cloud Connection
             </button>
 
             {supabaseTestStatus && (
@@ -503,11 +541,11 @@ export const AdministrationView: React.FC = () => {
             <div className="space-y-2 text-xs">
               <div className="flex justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
                 <span className="text-slate-400">Primary Database:</span>
-                <span className="font-bold text-slate-200 font-mono">Dexie.js (IndexedDB)</span>
+                <span className="font-bold text-slate-200 font-mono">Local Transaction Database</span>
               </div>
               <div className="flex justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
                 <span className="text-slate-400">Offline Resilience:</span>
-                <span className="font-bold text-emerald-400 font-mono">ACID Guaranteed</span>
+                <span className="font-bold text-emerald-400 font-mono">Active &amp; Protected</span>
               </div>
             </div>
 

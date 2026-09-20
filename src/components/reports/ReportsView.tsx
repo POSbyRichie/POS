@@ -775,7 +775,7 @@ export const ReportsView: React.FC = () => {
           <div className="flex justify-between items-center">
             <div>
               <h3 className="text-base font-bold text-white">Pending Offline Transactions</h3>
-              <p className="text-xs text-slate-400">Transactions committed to IndexedDB awaiting cloud sync</p>
+              <p className="text-xs text-slate-400">Transactions saved locally awaiting cloud sync</p>
             </div>
             <span className="px-3 py-1 bg-amber-950 text-amber-300 border border-amber-800 rounded-xl text-xs font-bold font-mono">
               {pendingSyncSales.length} Pending
@@ -785,7 +785,7 @@ export const ReportsView: React.FC = () => {
           <div className="divide-y divide-slate-800 max-h-96 overflow-y-auto">
             {pendingSyncSales.length === 0 ? (
               <div className="p-8 text-center text-emerald-400 text-xs">
-                All transactions are fully synchronized with Supabase!
+                All transactions are synchronized with the cloud.
               </div>
             ) : (
               pendingSyncSales.map(s => (

@@ -9,6 +9,7 @@ import {
   FileText,
   ShieldCheck,
   Trash2,
+  Check,
 } from 'lucide-react';
 import { db } from '../../db';
 import { SyncQueueItem, SyncError, AuditLog } from '../../types';
@@ -102,10 +103,10 @@ export const SystemView: React.FC = () => {
         <div>
           <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
             <Activity className="w-5 h-5 text-sky-400" />
-            <span>SYSTEM HEALTH, SYNC ENGINE &amp; AUDIT LOGS</span>
+            <span>System Health &amp; Diagnostics</span>
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Offline Status Probe, Idempotent Sync Queue, Dead Letter Errors &amp; Financial Audit Records
+            Terminal status, sync queue monitor, error logs, and audit records
           </p>
         </div>
 
@@ -132,7 +133,7 @@ export const SystemView: React.FC = () => {
           }`}
         >
           {isOnline ? <Wifi className="w-3.5 h-3.5 text-emerald-400" /> : <WifiOff className="w-3.5 h-3.5 text-amber-400" />}
-          <span>Offline Status</span>
+          <span>Terminal Status</span>
         </button>
 
         <button
@@ -172,45 +173,50 @@ export const SystemView: React.FC = () => {
         </button>
       </div>
 
-      {/* TAB 1: OFFLINE STATUS */}
+      {/* TAB 1: STATUS */}
       {activeTab === 'offline_status' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Status Metric Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
               <span className="text-xs font-semibold text-slate-400 block">Connection State</span>
               <div className="flex items-center gap-2 mt-1">
-                <span className={`w-3 h-3 rounded-full ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-                <span className="text-xl font-bold text-white uppercase font-mono">
-                  {connectivityService.getStatus()}
-                </span>
+                <span
+                  className={`w-2.5 h-2.5 rounded-full ${
+                    isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
+                  }`}
+                />
+                <span className="text-lg font-bold text-white">{isOnline ? 'ONLINE' : 'OFFLINE'}</span>
               </div>
               <span className="text-[11px] text-slate-500 mt-1 block">
-                {isOnline ? 'Internet connection verified' : 'Running 100% offline'}
+                {isOnline ? 'Network synchronized' : 'Offline mode active'}
               </span>
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
-              <span className="text-xs font-semibold text-slate-400 block">Sync Pipeline Stage</span>
-              <span className="text-xl font-bold text-sky-400 mt-1 block uppercase font-mono">
+              <span className="text-xs font-semibold text-slate-400 block">Sync Pipeline State</span>
+              <span className="text-lg font-bold text-sky-400 mt-1 block uppercase font-mono">
                 {telemetry.stage}
               </span>
-              <span className="text-[11px] text-slate-500 mt-1 block">{telemetry.statusMessage}</span>
+              <span className="text-[11px] text-slate-500 mt-1 block truncate">
+                {telemetry.statusMessage}
+              </span>
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
-              <span className="text-xs font-semibold text-slate-400 block">Pending Queue Mutations</span>
+              <span className="text-xs font-semibold text-slate-400 block">Pending Queue</span>
               <span className="text-xl font-bold text-amber-400 mt-1 block font-mono">
                 {telemetry.pendingCount}
               </span>
-              <span className="text-[11px] text-slate-500 mt-1 block">Awaiting upstream commit</span>
+              <span className="text-[11px] text-slate-500 mt-1 block">Awaiting cloud sync</span>
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
-              <span className="text-xs font-semibold text-slate-400 block">Local IndexedDB Usage</span>
+              <span className="text-xs font-semibold text-slate-400 block">Local Database Usage</span>
               <span className="text-xl font-bold text-emerald-400 mt-1 block font-mono">
                 {storageEstimate ? `${(storageEstimate.usage / 1024 / 1024).toFixed(2)} MB` : 'Available'}
               </span>
-              <span className="text-[11px] text-slate-500 mt-1 block">Persistent offline database</span>
+              <span className="text-[11px] text-slate-500 mt-1 block">Local storage database</span>
             </div>
           </div>
 
@@ -218,31 +224,31 @@ export const SystemView: React.FC = () => {
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-3">
             <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
               <ShieldCheck className="w-5 h-5" />
-              <span>Local-First Offline Architectural Guarantees</span>
+              <span>Offline Architecture &amp; Data Protection</span>
             </div>
-            <ul className="text-xs text-slate-300 space-y-2 leading-relaxed">
+            <ul className="text-xs text-slate-300 space-y-2.5 leading-relaxed">
               <li className="flex items-start gap-2">
-                <span className="text-emerald-400 font-bold">✓</span>
+                <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                 <span>
-                  <strong>Zero Network Dependency on Sale Completion:</strong> Completing a sale is 100% committed to local Dexie IndexedDB ACID transactions. An HTTP request is never made in the critical checkout path.
+                  <strong>Zero Network Dependency on Checkout:</strong> Completing a sale commits directly to local database transactions. No internet connection is required during payment.
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-emerald-400 font-bold">✓</span>
+                <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                 <span>
-                  <strong>No LocalStorage for Transactions:</strong> All sales, payments, items, customers, shifts, and sync records use typed IndexedDB schemas.
+                  <strong>Encrypted Local Storage:</strong> All sales, payments, items, customers, shifts, and sync records use secure, structured local storage.
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-emerald-400 font-bold">✓</span>
+                <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                 <span>
-                  <strong>Idempotent Sync Pipeline:</strong> Every offline sale has a unique UUID and idempotency key. Network disconnects during sync will never produce duplicate records.
+                  <strong>Duplicate-Safe Sync Pipeline:</strong> Every transaction carries a unique identifier. Network interruptions during synchronization never produce duplicate records.
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-emerald-400 font-bold">✓</span>
+                <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                 <span>
-                  <strong>Multi-Terminal Stock Conflict Auditing:</strong> Concurrent offline sales track inventory delta movements, detecting oversells and logging deficits automatically.
+                  <strong>Multi-Terminal Stock Auditing:</strong> Inventory movements are tracked chronologically to keep stock records consistent across registers.
                 </span>
               </li>
             </ul>
@@ -304,7 +310,7 @@ export const SystemView: React.FC = () => {
       {activeTab === 'sync_errors' && (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl space-y-4">
           <div className="p-4 bg-slate-950/70 border-b border-slate-800 flex justify-between items-center text-xs font-bold text-slate-400 uppercase tracking-wider">
-            <span>Dead-Letter Queue &amp; Sync Exceptions</span>
+            <span>Sync Exceptions &amp; Error Log</span>
             {syncErrors.length > 0 && (
               <button
                 onClick={handleClearErrors}
@@ -318,8 +324,9 @@ export const SystemView: React.FC = () => {
 
           <div className="divide-y divide-slate-800/80 max-h-[500px] overflow-y-auto">
             {syncErrors.length === 0 ? (
-              <div className="p-8 text-center text-xs text-emerald-400">
-                ✓ No sync errors detected. Dead-letter queue is completely clear.
+              <div className="p-8 text-center text-xs text-emerald-400 flex items-center justify-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span>No sync errors detected. All systems operating normally.</span>
               </div>
             ) : (
               syncErrors.map(err => (

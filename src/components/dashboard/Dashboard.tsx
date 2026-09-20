@@ -87,13 +87,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenSyncModal }) => {
             <span>{currentTime}</span>
           </div>
 
-          {/* Primary CTA: NEW SALE (Step 4) */}
+          {/* Primary CTA: New Sale */}
           <button
             onClick={() => startNewSale()}
             className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-600/30 active:scale-95"
           >
             <PlusCircle className="w-4 h-4" />
-            START NEW SALE (STEP 4)
+            Start New Sale
           </button>
         </div>
       </div>
@@ -261,7 +261,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenSyncModal }) => {
                 onClick={() => setClosingShiftOpen(true)}
                 className="py-2.5 bg-slate-800 hover:bg-rose-950/80 hover:text-rose-300 text-slate-300 font-semibold rounded-xl text-xs transition border border-slate-700"
               >
-                Close Shift (Step 18)
+                Close Shift
               </button>
             </div>
           </div>
@@ -272,9 +272,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenSyncModal }) => {
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
         <div className="flex justify-between items-center">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            POS Subsystems &amp; Navigation Centers
+            Quick Navigation &amp; Operations
           </h3>
-          <span className="text-[11px] text-slate-500">Fast cashier workflow routing</span>
+          <span className="text-[11px] text-slate-500">Fast access shortcuts</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">

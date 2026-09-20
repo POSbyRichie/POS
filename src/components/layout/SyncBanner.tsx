@@ -137,12 +137,12 @@ export const SyncBanner: React.FC<SyncBannerProps> = ({ onOpenSyncModal }) => {
           <span className="font-extrabold tracking-wide text-[12px]">{telemetry.statusMessage}</span>
           <span className="hidden md:inline text-[11px] opacity-75">
             {telemetry.stage === 'syncing'
-              ? '&bull; Atomic batch commit in progress'
+              ? '&bull; Syncing transactions...'
               : telemetry.stage === 'synchronized'
-              ? '&bull; All changes confirmed on server'
+              ? '&bull; All records up to date'
               : telemetry.stage === 'sync_failed'
-              ? '&bull; Idempotency preserved in IndexedDB'
-              : '&bull; Sales recorded safely in local database'}
+              ? '&bull; Stored locally, will retry automatically'
+              : '&bull; Working offline, records saved locally'}
           </span>
         </div>
       </div>
@@ -154,10 +154,10 @@ export const SyncBanner: React.FC<SyncBannerProps> = ({ onOpenSyncModal }) => {
             type="button"
             onClick={handleRetryNow}
             disabled={isRetryingNow}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-900 hover:bg-rose-800 text-rose-100 border border-rose-600 text-[11px] font-bold transition shadow-sm"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-900 hover:bg-rose-800 text-rose-100 border border-rose-600 text-[11px] font-bold transition shadow-sm cursor-pointer"
           >
             <RotateCcw className={`w-3 h-3 ${isRetryingNow ? 'animate-spin' : ''}`} />
-            <span>Retry Now</span>
+            <span>Retry</span>
           </button>
         )}
 
@@ -166,10 +166,10 @@ export const SyncBanner: React.FC<SyncBannerProps> = ({ onOpenSyncModal }) => {
             type="button"
             onClick={handleRetryNow}
             disabled={isRetryingNow}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-800 hover:bg-sky-700 text-sky-100 border border-sky-600 text-[11px] font-bold transition shadow-sm"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-800 hover:bg-sky-700 text-sky-100 border border-sky-600 text-[11px] font-bold transition shadow-sm cursor-pointer"
           >
             <RefreshCw className={`w-3 h-3 ${isRetryingNow ? 'animate-spin' : ''}`} />
-            <span>Sync Now</span>
+            <span>Sync</span>
           </button>
         )}
 
@@ -177,9 +177,9 @@ export const SyncBanner: React.FC<SyncBannerProps> = ({ onOpenSyncModal }) => {
           <button
             type="button"
             onClick={onOpenSyncModal}
-            className="flex items-center gap-0.5 text-[11px] font-semibold opacity-80 hover:opacity-100 hover:underline transition"
+            className="flex items-center gap-0.5 text-[11px] font-semibold opacity-80 hover:opacity-100 hover:underline transition cursor-pointer"
           >
-            <span>Telemetry</span>
+            <span>Status</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </button>
         )}

@@ -105,7 +105,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ onClose, onProceedTo
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2 text-sky-400 font-bold text-sm">
                 <Printer className="w-5 h-5 text-sky-400" />
-                <span>12. RECEIPT OPTIONS</span>
+                <span>Receipt Options</span>
               </div>
               <button
                 onClick={onClose}
@@ -127,7 +127,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ onClose, onProceedTo
                 className="w-full py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-sky-600/30 flex items-center justify-center gap-2"
               >
                 <Printer className="w-4 h-4" />
-                PRINT THERMAL RECEIPT
+                Print Receipt
               </button>
 
               <button
@@ -137,7 +137,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ onClose, onProceedTo
                 className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold rounded-xl text-xs transition border border-slate-700 flex items-center justify-center gap-1.5"
               >
                 <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
-                <span>REPRINT (DUPLICATE)</span>
+                <span>Reprint Receipt</span>
                 {activeReceipt.reprint_count > 0 && (
                   <span className="ml-1 px-1.5 py-0.5 bg-amber-950 text-amber-300 text-[10px] rounded-full border border-amber-800">
                     #{activeReceipt.reprint_count}
@@ -170,7 +170,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ onClose, onProceedTo
                 </form>
               ) : (
                 <p className="text-[11px] text-emerald-400 flex items-center gap-1 font-semibold">
-                  <CheckCircle className="w-3.5 h-3.5" /> Enqueued for offline sync!
+                  <CheckCircle className="w-3.5 h-3.5" /> Enqueued for delivery
                 </p>
               )}
             </div>
@@ -199,19 +199,18 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ onClose, onProceedTo
                 </form>
               ) : (
                 <p className="text-[11px] text-emerald-400 flex items-center gap-1 font-semibold">
-                  <CheckCircle className="w-3.5 h-3.5" /> Enqueued for SMS delivery!
+                  <CheckCircle className="w-3.5 h-3.5" /> Enqueued for SMS delivery
                 </p>
               )}
             </div>
           </div>
 
           <div className="pt-3 border-t border-slate-800 space-y-2">
-            {/* Step 16 Transition Button */}
             <button
               onClick={onProceedToCompleted}
-              className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-xs transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2"
             >
-              <span>CONFIRM SALE COMPLETED (STEP 16)</span>
+              <span>Complete Sale</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

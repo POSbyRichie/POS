@@ -171,7 +171,7 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ onProceedToRevie
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2 py-1 bg-slate-800 border border-slate-700 rounded-lg text-[10px] font-mono text-slate-400">
                 <Barcode className="w-3.5 h-3.5 text-sky-400" />
-                SCANNER READY
+                Ready
               </span>
             </div>
 
@@ -180,7 +180,7 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ onProceedToRevie
               className="px-5 py-3.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-sky-600/30 flex items-center gap-2 shrink-0"
             >
               <Search className="w-4 h-4" />
-              SEARCH (STEP 5)
+              Search
             </button>
           </div>
         </form>
@@ -231,35 +231,32 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({ onProceedToRevie
                 Added &ldquo;{recentlyAddedProduct.name}&rdquo; to cart!
               </p>
               <p className="text-[11px] text-emerald-400/90">
-                Authoritative Decision: Need additional products?
+                Item added to cart
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            {/* YES -> Return to Scan Next Item (Step 5) */}
-            {/* YES -> Return to Scan Next Item (Step 5) */}
             <button
               onClick={() => {
                 setShowMoreProductsPrompt(false);
                 setActiveWorkflowStep(5);
                 searchInputRef.current?.focus();
               }}
-              className="flex-1 sm:flex-initial px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-emerald-600/60 text-emerald-200 font-bold rounded-xl text-xs transition"
+              className="flex-1 sm:flex-initial px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-emerald-600/60 text-emerald-200 font-bold rounded-xl text-xs transition cursor-pointer"
             >
-              YES: Scan Next Item (Step 5)
+              Add More
             </button>
 
-            {/* NO -> Continue to Review Cart (Step 8) */}
             <button
               onClick={() => {
                 setShowMoreProductsPrompt(false);
                 setActiveWorkflowStep(8);
                 onProceedToReviewCart();
               }}
-              className="flex-1 sm:flex-initial px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-1.5"
+              className="flex-1 sm:flex-initial px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <span>NO: Review Cart (Step 8)</span>
+              <span>Review Cart</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>

@@ -86,7 +86,7 @@ export const NavigationDock: React.FC<NavigationDockProps> = ({ onOpenSyncModal 
         <button
           type="button"
           onClick={onOpenSyncModal}
-          title={isOnline ? 'Internet Connected (Click for Sync Center)' : 'Offline Mode (Local-first IndexedDB)'}
+          title={isOnline ? 'Online • Connected' : 'Offline Mode'}
           className="relative p-2.5 rounded-2xl transition hover:bg-slate-900 active:scale-95 group"
         >
           {isOnline ? (

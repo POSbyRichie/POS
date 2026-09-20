@@ -100,9 +100,9 @@ export const CustomerSelector: React.FC<CustomerSelectorProps> = ({ onClose }) =
           <div>
             <div className="flex items-center gap-2 text-sky-400 font-bold text-sm">
               <User className="w-5 h-5" />
-              <span>9. CUSTOMER SELECTION &amp; LOYALTY</span>
+              <span>Customer &amp; Loyalty</span>
             </div>
-            <p className="text-xs text-slate-400">Search existing customer or create new member offline</p>
+            <p className="text-xs text-slate-400">Search existing customer or create a new profile</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white">
             <X className="w-5 h-5" />
@@ -124,7 +124,7 @@ export const CustomerSelector: React.FC<CustomerSelectorProps> = ({ onClose }) =
                 W
               </div>
               <div className="text-left">
-                <span className="text-xs font-bold block text-slate-200">Walk-in Customer (Standard)</span>
+                <span className="text-xs font-bold block text-slate-200">Walk-in Customer</span>
                 <span className="text-[10px] text-slate-500">No loyalty points will be accrued</span>
               </div>
             </div>
@@ -192,10 +192,10 @@ export const CustomerSelector: React.FC<CustomerSelectorProps> = ({ onClose }) =
               </div>
             </>
           ) : (
-            /* Add New Customer Form (Step 9: Add New Customer Offline) */
+            /* Add New Customer Form */
             <form onSubmit={handleCreateCustomer} className="space-y-3 pt-2">
               <div className="flex justify-between items-center mb-1">
-                <span className="text-xs font-bold text-emerald-400">Create New Customer (Offline-Ready)</span>
+                <span className="text-xs font-bold text-emerald-400">Create New Customer</span>
                 <button
                   type="button"
                   onClick={() => setIsAddingNew(false)}

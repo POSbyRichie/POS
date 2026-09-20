@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Wifi, WifiOff, RefreshCw, AlertTriangle, CloudOff, CheckCircle } from 'lucide-react';
+import { Wifi, WifiOff, RefreshCw, CloudOff, CheckCircle, AlertTriangle } from 'lucide-react';
 import { connectivityService } from '../../services/connectivity';
 import { syncService, SyncStats } from '../../services/syncService';
 import { ConnectivityStatus } from '../../types';
@@ -10,7 +10,6 @@ interface OfflineIndicatorProps {
 
 export const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({ onOpenSyncModal }) => {
   const [status, setStatus] = useState<ConnectivityStatus>(connectivityService.getStatus());
-  const [isSimulatedOffline, setIsSimulatedOffline] = useState<boolean>(connectivityService.isSimulatedOffline());
   const [syncStats, setSyncStats] = useState<SyncStats>({
     pendingCount: 0,
     syncedCount: 0,
@@ -22,7 +21,6 @@ export const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({ onOpenSyncMo
   useEffect(() => {
     const unsubConn = connectivityService.subscribe(newStatus => {
       setStatus(newStatus);
-      setIsSimulatedOffline(connectivityService.isSimulatedOffline());
     });
     const unsubSync = syncService.subscribe(stats => {
       setSyncStats(stats);
@@ -33,12 +31,6 @@ export const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({ onOpenSyncMo
       unsubSync();
     };
   }, []);
-
-  const toggleSimulatedOffline = () => {
-    const next = !isSimulatedOffline;
-    connectivityService.setSimulatedOffline(next);
-    setIsSimulatedOffline(next);
-  };
 
   const handleManualSync = async () => {
     await syncService.processQueue();
@@ -116,25 +108,12 @@ export const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({ onOpenSyncMo
         <button
           onClick={handleManualSync}
           disabled={syncStats.isSyncing}
-          className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-sky-600 hover:bg-sky-500 text-white font-medium transition disabled:opacity-50"
+          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs bg-sky-600 hover:bg-sky-500 text-white font-medium transition disabled:opacity-50 cursor-pointer"
         >
           <RefreshCw className={`w-3 h-3 ${syncStats.isSyncing ? 'animate-spin' : ''}`} />
           Sync Now
         </button>
       )}
-
-      {/* Offline Mode QA Simulator Toggle */}
-      <button
-        onClick={toggleSimulatedOffline}
-        className={`px-2 py-1 rounded text-xs font-mono transition border ${
-          isSimulatedOffline
-            ? 'bg-rose-900/60 border-rose-500 text-rose-200'
-            : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200'
-        }`}
-        title="Toggle simulated zero-internet offline mode for testing"
-      >
-        {isSimulatedOffline ? '⚡ FORCE OFFLINE ON' : 'Simulate Offline'}
-      </button>
     </div>
   );
 };

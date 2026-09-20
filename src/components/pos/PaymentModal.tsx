@@ -214,11 +214,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, onPaymentSu
         <div className="w-full md:w-7/12 p-4 sm:p-5 border-b md:border-b-0 md:border-r border-slate-800 space-y-4 overflow-y-auto">
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="text-base font-bold text-white uppercase tracking-tight flex items-center gap-2">
+              <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-emerald-400" />
-                <span>10. PAYMENT ENGINE</span>
+                <span>Payment</span>
               </h3>
-              <p className="text-xs text-slate-400">Select tender method or build split payment</p>
+              <p className="text-xs text-slate-400">Select payment method or enter amount tendered</p>
             </div>
             <button
               onClick={handleDecisionCancel}
@@ -611,7 +611,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, onPaymentSu
               <div className="mt-3 p-3.5 bg-rose-950/80 border border-rose-800 rounded-xl space-y-2 text-xs animate-in fade-in duration-150">
                 <div className="flex items-center gap-2 text-rose-300 font-bold">
                   <AlertTriangle className="w-4 h-4 shrink-0" />
-                  <span>DECISION: PAYMENT UNSUCCESSFUL</span>
+                  <span>Payment Unsuccessful</span>
                 </div>
                 <p className="text-[11px] text-rose-400 font-medium">
                   {decisionState.failureReason || 'Transaction validation failed.'}
@@ -653,27 +653,26 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, onPaymentSu
 
           {/* Action CTAs */}
           <div className="space-y-2">
-            {/* Primary Submit Button: Step 11 Decision Execution */}
             <button
               disabled={isProcessing || (!isFullyPaid && tenders.length > 0)}
               onClick={handleExecutePayment}
-              className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-extrabold rounded-xl text-sm transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-extrabold rounded-xl text-sm transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer"
             >
               <CheckCircle className="w-4 h-4" />
               {isProcessing
-                ? 'Processing Payment Engine...'
+                ? 'Processing Payment...'
                 : isFullyPaid
-                ? 'COMPLETE PAYMENT (STEP 11 YES)'
-                : 'SUBMIT PAYMENT (STEP 10/11)'}
+                ? 'Complete Payment'
+                : 'Tender Payment'}
             </button>
 
             {/* Cancel / Back to Cart */}
             <button
               type="button"
               onClick={handleDecisionCancel}
-              className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl text-xs font-semibold transition"
+              className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl text-xs font-semibold transition cursor-pointer"
             >
-              Cancel Payment &amp; Back to Cart (Step 8)
+              Cancel &amp; Back to Cart
             </button>
           </div>
         </div>

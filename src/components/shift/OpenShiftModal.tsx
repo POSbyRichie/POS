@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PlayCircle, Terminal, Calendar, AlertTriangle, CheckCircle } from 'lucide-react';
+import { PlayCircle, Terminal, Calendar, AlertTriangle } from 'lucide-react';
 import { usePos } from '../../store/posStore';
 import { db } from '../../db';
 import { Shift } from '../../types';
@@ -196,8 +196,7 @@ export const OpenShiftModal: React.FC = () => {
               disabled={isSubmitting}
               className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2"
             >
-              <CheckCircle className="w-4 h-4" />
-              {isSubmitting ? 'Opening Shift...' : 'CONFIRM FLOAT & OPEN SHIFT'}
+              {isSubmitting ? 'Opening Shift...' : 'Open Shift'}
             </button>
           </div>
         </form>

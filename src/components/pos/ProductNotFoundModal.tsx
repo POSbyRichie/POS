@@ -50,7 +50,7 @@ export const ProductNotFoundModal: React.FC = () => {
         <div className="bg-amber-950/70 p-5 border-b border-amber-900/60 flex justify-between items-center">
           <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
             <HelpCircle className="w-5 h-5" />
-            <span>PRODUCT FOUND DECISION: NO MATCH</span>
+            <span>Product Not Found</span>
           </div>
           <button
             onClick={() => setProductNotFoundOpen(false)}
@@ -69,7 +69,7 @@ export const ProductNotFoundModal: React.FC = () => {
               &ldquo;{searchedNotFoundTerm}&rdquo;
             </p>
             <p className="text-[11px] text-slate-500 mt-2">
-              According to the authoritative POS workflow, you may search again or perform an authorized manual entry. Active transaction session is safely preserved.
+              Please search by product name, check the SKU, or add a custom line item.
             </p>
           </div>
 
@@ -77,18 +77,18 @@ export const ProductNotFoundModal: React.FC = () => {
             <div className="flex flex-col gap-2 pt-2">
               <button
                 onClick={() => setProductNotFoundOpen(false)}
-                className="w-full py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-sky-600/30 flex items-center justify-center gap-2"
+                className="w-full py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-sky-600/30 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Search className="w-4 h-4" />
-                SEARCH AGAIN
+                Search Again
               </button>
 
               <button
                 onClick={() => setIsManualEntryMode(true)}
-                className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl text-xs transition border border-slate-700 flex items-center justify-center gap-2"
+                className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl text-xs transition border border-slate-700 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <PlusCircle className="w-4 h-4" />
-                MANUAL ENTRY (AUTHORIZED STAFF)
+                Manual Line-Item Entry
               </button>
             </div>
           ) : (

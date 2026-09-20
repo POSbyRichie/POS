@@ -13,11 +13,11 @@ export const StockAlertModal: React.FC = () => {
         <div className="bg-rose-950/80 p-5 border-b border-rose-900/60 flex justify-between items-center">
           <div className="flex items-center gap-2 text-rose-400 font-bold text-sm">
             <AlertOctagon className="w-5 h-5" />
-            <span>STOCK DECISION: OUT OF STOCK</span>
+            <span>Out of Stock</span>
           </div>
           <button
             onClick={() => setStockAlertOpen(false)}
-            className="text-slate-400 hover:text-white"
+            className="text-slate-400 hover:text-white cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -29,16 +29,16 @@ export const StockAlertModal: React.FC = () => {
           </div>
 
           <p className="text-xs text-slate-400">
-            Authoritative Rule: Unavailable quantity will not be added to cart. Cashier may continue searching for alternative products or notify inventory manager.
+            This item cannot be added to the cart because there is no remaining available stock in the inventory.
           </p>
 
           <div className="pt-2">
             <button
               onClick={() => setStockAlertOpen(false)}
-              className="w-full py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-sky-600/30 flex items-center justify-center gap-2"
+              className="w-full py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-sky-600/30 flex items-center justify-center gap-2 cursor-pointer"
             >
               <Search className="w-4 h-4" />
-              CONTINUE SEARCHING PRODUCTS
+              Continue
             </button>
           </div>
         </div>

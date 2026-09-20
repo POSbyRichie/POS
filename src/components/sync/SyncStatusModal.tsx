@@ -173,9 +173,9 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({ onClose }) => 
           {activeTab === 'pipeline' && (
             <div className="space-y-4">
               <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-300">
-                <p className="font-semibold text-white mb-1">Authoritative Offline-to-Supabase Sync Pipeline</p>
+                <p className="font-semibold text-white mb-1">Local-to-Cloud Synchronization</p>
                 <p className="text-[11px] text-slate-400">
-                  Transactions are safely committed locally in IndexedDB first, enqueued into <code className="text-sky-300">sync_queue</code> with cryptographic idempotency keys, and dispatched to Supabase with automatic deduplication.
+                  Transactions are saved locally first, added to the outbound synchronization queue, and securely sent to the cloud when connected.
                 </p>
               </div>
 
@@ -186,12 +186,12 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({ onClose }) => 
                   <div className="flex items-center gap-2.5">
                     <Database className="w-4 h-4 text-emerald-400" />
                     <div>
-                      <span className="font-bold text-white">1. SALE CREATED &rarr; IndexedDB</span>
-                      <p className="text-[10px] text-slate-400">ACID multi-table transaction committed locally</p>
+                      <span className="font-bold text-white">1. Sale Saved Locally</span>
+                      <p className="text-[10px] text-slate-400">Secure transaction written to local database</p>
                     </div>
                   </div>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
-                    ACID GUARANTEED
+                    SAVED
                   </span>
                 </div>
 
@@ -204,8 +204,8 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({ onClose }) => 
                   <div className="flex items-center gap-2.5">
                     <Clock className="w-4 h-4 text-sky-400" />
                     <div>
-                      <span className="font-bold text-white">2. sync_queue PERSISTENCE</span>
-                      <p className="text-[10px] text-slate-400">Idempotency key generated, status: pending</p>
+                      <span className="font-bold text-white">2. Sync Outbox Queue</span>
+                      <p className="text-[10px] text-slate-400">Unique identifier attached, ready for sync</p>
                     </div>
                   </div>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-800">
@@ -226,9 +226,9 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({ onClose }) => 
                   <div className="flex items-center gap-2.5">
                     <ShieldCheck className="w-4 h-4" />
                     <div>
-                      <span className="font-bold">3. Internet Available?</span>
+                      <span className="font-bold">3. Network Connection</span>
                       <p className="text-[10px] opacity-80">
-                        {isOnline ? 'YES — Online heartbeat active' : 'NO — Waiting for connectivity'}
+                        {isOnline ? 'Online — connection verified' : 'Offline — transactions queued locally'}
                       </p>
                     </div>
                   </div>
@@ -246,28 +246,28 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({ onClose }) => 
                   <div className="flex items-center gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-sky-400" />
                     <div>
-                      <span className="font-bold text-white">4. Validate Payload</span>
-                      <p className="text-[10px] text-slate-400">Pre-flight schema integrity check</p>
+                      <span className="font-bold text-white">4. Data Verification</span>
+                      <p className="text-[10px] text-slate-400">Pre-sync format and integrity check</p>
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono text-slate-400">CLIENT CHECK</span>
+                  <span className="text-[10px] font-mono text-slate-400">VALIDATED</span>
                 </div>
 
                 <div className="flex justify-center text-slate-600 my-0.5">
                   <ArrowDown className="w-3.5 h-3.5" />
                 </div>
 
-                {/* Stage 5 & 6 */}
+                {/* Stage 5 */}
                 <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <Send className="w-4 h-4 text-purple-400" />
                     <div>
-                      <span className="font-bold text-white">5 &amp; 6. Send to Supabase &amp; Idempotency Check</span>
-                      <p className="text-[10px] text-slate-400">Atomic upsert onConflict(idempotency_key)</p>
+                      <span className="font-bold text-white">5. Cloud Synchronization</span>
+                      <p className="text-[10px] text-slate-400">Secure upload with duplicate prevention</p>
                     </div>
                   </div>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800">
-                    DEDUPLICATED
+                    PROTECTED
                   </span>
                 </div>
 
@@ -275,17 +275,17 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({ onClose }) => 
                   <ArrowDown className="w-3.5 h-3.5" />
                 </div>
 
-                {/* Stage 7 & 8 */}
+                {/* Stage 6 */}
                 <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                     <div>
-                      <span className="font-bold text-white">7 &amp; 8. Commit &amp; Mark SYNCHRONIZED</span>
-                      <p className="text-[10px] text-slate-400">Local sync_status updated to synced</p>
+                      <span className="font-bold text-white">6. Sync Confirmation</span>
+                      <p className="text-[10px] text-slate-400">Local and cloud records synchronized</p>
                     </div>
                   </div>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
-                    SYNCED
+                    COMPLETE
                   </span>
                 </div>
               </div>
@@ -344,7 +344,7 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({ onClose }) => 
           {activeTab === 'errors' && (
             <div className="space-y-3">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-xs text-slate-400">Dead-letter sync failures requiring review</span>
+                <span className="text-xs text-slate-400">Sync exceptions requiring review</span>
                 {syncErrors.length > 0 && (
                   <button
                     onClick={handleClearResolvedErrors}
@@ -355,7 +355,7 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({ onClose }) => 
                 )}
               </div>
               {syncErrors.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 text-xs">No dead-letter sync errors logged.</div>
+                <div className="text-center py-12 text-slate-500 text-xs">No sync errors logged. All records are up to date.</div>
               ) : (
                 syncErrors.map(err => (
                   <div key={err.id} className="p-3.5 rounded-xl border border-rose-900/50 bg-rose-950/20 text-xs space-y-1">

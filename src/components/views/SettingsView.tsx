@@ -35,8 +35,8 @@ export function SettingsView() {
             <Settings className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-white">System Architecture &amp; Environment Settings</h2>
-            <p className="text-xs text-slate-400">Phase 1 Infrastructure &bull; Local-First Environment Controls</p>
+            <h2 className="text-lg font-bold text-white">System Settings &amp; Diagnostics</h2>
+            <p className="text-xs text-slate-400">Database connectivity and system diagnostic controls</p>
           </div>
         </div>
       </div>
@@ -53,14 +53,14 @@ export function SettingsView() {
             <div className="flex justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
               <span className="text-slate-400">Configured:</span>
               <span className={`font-bold font-mono ${env.isSupabaseConfigured ? 'text-emerald-400' : 'text-amber-400'}`}>
-                {env.isSupabaseConfigured ? 'YES (Active)' : 'OFFLINE MODE (Unconfigured)'}
+                {env.isSupabaseConfigured ? 'Connected' : 'Local Storage Mode'}
               </span>
             </div>
 
             <div className="flex justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
               <span className="text-slate-400">URL:</span>
               <span className="font-mono text-slate-300 truncate max-w-[180px]">
-                {env.supabaseUrl || 'None (Local IndexedDB only)'}
+                {env.supabaseUrl || 'Local Storage Mode'}
               </span>
             </div>
           </div>
@@ -72,7 +72,7 @@ export function SettingsView() {
             className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl text-xs flex items-center justify-center gap-2 transition border border-slate-700"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isTesting ? 'animate-spin' : ''}`} />
-            Test Supabase Connection Probe
+            Test Cloud Connection
           </button>
 
           {supabaseTestStatus && (
@@ -91,18 +91,18 @@ export function SettingsView() {
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
           <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
             <Database className="w-4 h-4" />
-            <span>IndexedDB &amp; Offline Diagnostics</span>
+            <span>Local Storage &amp; Diagnostics</span>
           </div>
 
           <div className="space-y-2 text-xs">
             <div className="flex justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
               <span className="text-slate-400">Primary Database:</span>
-              <span className="font-bold text-slate-200 font-mono">Dexie.js (IndexedDB)</span>
+              <span className="font-bold text-slate-200 font-mono">Local Transaction Database</span>
             </div>
 
             <div className="flex justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
               <span className="text-slate-400">Offline Fallback:</span>
-              <span className="font-bold text-emerald-400 font-mono">100% Zero-Latency Ready</span>
+              <span className="font-bold text-emerald-400 font-mono">Active &amp; Protected</span>
             </div>
           </div>
 
@@ -112,7 +112,7 @@ export function SettingsView() {
             className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-600/30"
           >
             <FileText className="w-3.5 h-3.5" />
-            Export Structured Telemetry Logs
+            Export System Logs
           </button>
         </div>
       </div>

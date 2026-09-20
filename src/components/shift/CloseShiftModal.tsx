@@ -229,7 +229,7 @@ export const CloseShiftModal: React.FC<CloseShiftModalProps> = ({ onClose }) => 
               className="w-2/3 py-3 bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-rose-600/30 flex items-center justify-center gap-2"
             >
               <LogOut className="w-4 h-4" />
-              {isSubmitting ? 'Closing Shift...' : 'CONFIRM & CLOSE SHIFT'}
+              {isSubmitting ? 'Closing Shift...' : 'Close Shift'}
             </button>
           </div>
         </form>

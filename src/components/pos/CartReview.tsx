@@ -77,7 +77,7 @@ export const CartReview: React.FC<CartReviewProps> = ({
           <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500">
             <p className="text-xs font-semibold">Cart is currently empty</p>
             <p className="text-[11px] text-slate-600 mt-1">
-              Scan a barcode or click items from the catalog (Step 5) to begin.
+              Scan a barcode or select items from the catalog to begin.
             </p>
           </div>
         ) : (
@@ -206,11 +206,11 @@ export const CartReview: React.FC<CartReviewProps> = ({
           }}
           className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-sky-400 font-semibold rounded-lg text-[11px] transition border border-slate-700"
         >
-          {selectedCustomer ? 'Change Customer (Step 9)' : '+ Select / Add Customer (Step 9)'}
+          {selectedCustomer ? 'Change Customer' : '+ Select / Add Customer'}
         </button>
       </div>
 
-      {/* Cart Financial Summary (Step 8 Calculations) */}
+      {/* Cart Financial Summary */}
       <div className="p-4 bg-slate-950/90 border-t border-slate-800 space-y-2">
         <div className="flex justify-between text-xs text-slate-400">
           <span>Subtotal</span>
@@ -287,13 +287,13 @@ export const CartReview: React.FC<CartReviewProps> = ({
         <button
           disabled={cartItems.length === 0}
           onClick={() => {
-            setActiveWorkflowStep(10); // Move to Step 10: Payment
+            setActiveWorkflowStep(10);
             onProceedToPayment();
           }}
           className="w-full mt-2 py-3.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-extrabold rounded-xl text-sm transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2"
         >
           <CreditCard className="w-4 h-4" />
-          PROCEED TO PAYMENT (STEP 10)
+          Proceed to Payment
         </button>
       </div>
     </div>

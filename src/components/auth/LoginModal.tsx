@@ -268,8 +268,8 @@ export const LoginModal: React.FC = () => {
               </span>
             </div>
             <div className="flex justify-between">
-              <span>Security Lease:</span>
-              <span className="text-emerald-400 font-medium">Salted WebCrypto SHA-256</span>
+              <span>Status:</span>
+              <span className="text-emerald-400 font-medium">Ready</span>
             </div>
           </div>
         </div>
@@ -366,10 +366,10 @@ export const LoginModal: React.FC = () => {
               className="w-full py-3 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-sky-600/30 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
             >
               <KeyRound className="w-4 h-4" />
-              <span>{isVerifying ? 'Verifying Credentials...' : 'AUTHENTICATE & ENTER REGISTER'}</span>
+              <span>{isVerifying ? 'Signing in...' : 'Sign In'}</span>
             </button>
             <p className="text-center text-[10px] text-slate-500">
-              Demo PIN: 1234 &bull; Admin / Cashier Salted PBKDF2 Verification
+              Default PIN: 1234
             </p>
           </div>
         </div>
