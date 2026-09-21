@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { usePos } from '../../store/posStore';
 import { useRouter } from '../../routes/router';
-import { db } from '../../db';
+import { db, productRepository } from '../../db';
 import { Product } from '../../types';
 import { formatMoney } from '../../utils/money';
 import { CashMovementModal } from '../shift/CashMovementModal';
@@ -64,7 +64,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenSyncModal }) => {
 
   const loadDashboardMetrics = async () => {
     // 1. Fetch low stock items
-    const allProducts = await db.products.where('is_active').equals(1).toArray();
+    const allProducts = await productRepository.getActiveProducts();
     setTotalProductsCount(allProducts.length);
     const lowStock = allProducts.filter(p => p.stock_quantity <= p.min_stock_level);
     setLowStockProducts(lowStock);

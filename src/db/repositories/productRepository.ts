@@ -2,6 +2,7 @@ import { PosDatabase } from '../database';
 import { BaseRepository } from './baseRepository';
 import { Product, ProductFilterOptions, InventoryMovement } from '../../types';
 import { generateUUID } from '../../utils/id';
+import { isDummyProduct } from '../../utils/productionGuard';
 
 export interface CreateProductParams {
   id?: string;
@@ -26,27 +27,36 @@ export class ProductRepository extends BaseRepository<Product, string> {
     super(db.products);
   }
 
+  override async getAll(): Promise<Product[]> {
+    return this.db.products.filter(p => !isDummyProduct(p)).toArray();
+  }
+
   async getByBarcode(barcode: string): Promise<Product | undefined> {
     const clean = barcode.trim();
-    return this.db.products.where('barcode').equals(clean).first();
+    const prod = await this.db.products.where('barcode').equals(clean).first();
+    if (prod && isDummyProduct(prod)) return undefined;
+    return prod;
   }
 
   async getBySku(sku: string): Promise<Product | undefined> {
     const clean = sku.trim();
-    return this.db.products.where('sku').equals(clean).first();
+    const prod = await this.db.products.where('sku').equals(clean).first();
+    if (prod && isDummyProduct(prod)) return undefined;
+    return prod;
   }
 
   async getByCategory(categoryId: string): Promise<Product[]> {
-    return this.db.products.where('category_id').equals(categoryId).toArray();
+    const prods = await this.db.products.where('category_id').equals(categoryId).toArray();
+    return prods.filter(p => !isDummyProduct(p));
   }
 
   async getActiveProducts(): Promise<Product[]> {
-    return this.db.products.filter(p => p.is_active !== false).toArray();
+    return this.db.products.filter(p => p.is_active !== false && !isDummyProduct(p)).toArray();
   }
 
   async getLowStockProducts(): Promise<Product[]> {
     return this.db.products
-      .filter(p => p.is_active !== false && p.stock_quantity <= p.min_stock_level)
+      .filter(p => p.is_active !== false && !isDummyProduct(p) && p.stock_quantity <= p.min_stock_level)
       .toArray();
   }
 
@@ -61,6 +71,11 @@ export class ProductRepository extends BaseRepository<Product, string> {
 
     return this.db.products
       .filter(p => {
+        // 0. Dummy filter
+        if (isDummyProduct(p)) {
+          return false;
+        }
+
         // 1. Active filter
         if (activeOnly && p.is_active === false) {
           return false;

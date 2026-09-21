@@ -59,7 +59,7 @@ export const InitialSetupModal: React.FC<InitialSetupModalProps> = ({ onComplete
       return;
     }
     if (!currencySymbol.trim()) {
-      setError('Please enter your currency symbol (e.g. UGX, $, ₦, KSh).');
+      setError('Please enter your currency symbol (e.g. UGX, $, KSh).');
       return;
     }
     if (!registerName.trim()) {

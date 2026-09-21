@@ -7,6 +7,7 @@ import { conflictResolver, ConflictResolver } from './conflictResolver';
 import { retryManager, RetryManager } from './retryManager';
 import { SyncStage, SyncTelemetry, SyncTelemetryCallback } from './types';
 import { logger } from '../utils/logger';
+import { isDummyProduct, isDummyCategoryId } from '../utils/productionGuard';
 
 export interface SyncStats {
   pendingCount: number;
@@ -670,7 +671,10 @@ export class SyncEngine {
         .select('*');
 
       if (!catError && categories && categories.length > 0) {
-        await this.database.categories.bulkPut(categories.map(c => ({ ...c, sync_status: 'synced' })));
+        const cleanCategories = categories.filter(c => !isDummyCategoryId(c.id));
+        if (cleanCategories.length > 0) {
+          await this.database.categories.bulkPut(cleanCategories.map(c => ({ ...c, sync_status: 'synced' })));
+        }
       }
 
       // 2. Pull Products
@@ -680,27 +684,30 @@ export class SyncEngine {
         .eq('is_active', true);
 
       if (!prodError && products && products.length > 0) {
-        const pendingMovements = await this.database.inventoryMovements
-          .where('sync_status')
-          .equals('pending')
-          .toArray();
+        const cleanProducts = products.filter(p => !isDummyProduct(p));
+        if (cleanProducts.length > 0) {
+          const pendingMovements = await this.database.inventoryMovements
+            .where('sync_status')
+            .equals('pending')
+            .toArray();
 
-        const pendingDeltasByProduct = new Map<string, number>();
-        for (const mov of pendingMovements) {
-          const current = pendingDeltasByProduct.get(mov.product_id) || 0;
-          pendingDeltasByProduct.set(mov.product_id, current + mov.quantity_delta);
+          const pendingDeltasByProduct = new Map<string, number>();
+          for (const mov of pendingMovements) {
+            const current = pendingDeltasByProduct.get(mov.product_id) || 0;
+            pendingDeltasByProduct.set(mov.product_id, current + mov.quantity_delta);
+          }
+
+          const reconciledProducts = cleanProducts.map(p => {
+            const localDelta = pendingDeltasByProduct.get(p.id) || 0;
+            return {
+              ...p,
+              stock_quantity: Math.max(0, (p.stock_quantity ?? 0) + localDelta),
+              sync_status: 'synced' as const,
+            };
+          });
+
+          await this.database.products.bulkPut(reconciledProducts);
         }
-
-        const reconciledProducts = products.map(p => {
-          const localDelta = pendingDeltasByProduct.get(p.id) || 0;
-          return {
-            ...p,
-            stock_quantity: Math.max(0, (p.stock_quantity ?? 0) + localDelta),
-            sync_status: 'synced' as const,
-          };
-        });
-
-        await this.database.products.bulkPut(reconciledProducts);
       }
 
       return true;

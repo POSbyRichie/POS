@@ -197,4 +197,102 @@ describe('POS Production Data Cleanup & First-Run Verification', () => {
     expect(await db.customers.count()).toBe(1);
     expect(await db.sales.count()).toBe(0);
   });
+
+  it('detects and purges legacy dummy products, categories, and stores automatically on boot', async () => {
+    // Inject legacy dummy products and categories
+    await db.products.bulkPut([
+      {
+        id: '00000000-0000-0000-0000-000000000040',
+        sku: 'BEV-001',
+        barcode: '600100100001',
+        name: 'Highland Mineral Water 500ml',
+        category_id: 'cat-beverages',
+        cost_price: 800,
+        selling_price: 1500,
+        tax_rate: 18,
+        unit: 'pcs',
+        stock_quantity: 100,
+        min_stock_level: 20,
+        is_active: true,
+        sync_status: 'synced',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      {
+        id: '00000000-0000-0000-0000-000000000041',
+        sku: 'BEV-002',
+        barcode: '600100100002',
+        name: 'Coca Cola 350ml Glass',
+        category_id: 'cat-beverages',
+        cost_price: 1400,
+        selling_price: 2500,
+        tax_rate: 18,
+        unit: 'pcs',
+        stock_quantity: 80,
+        min_stock_level: 15,
+        is_active: true,
+        sync_status: 'synced',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ]);
+
+    await db.categories.put({
+      id: 'cat-beverages',
+      name: 'Beverages & Drinks',
+      slug: 'beverages',
+      is_active: true,
+      sync_status: 'synced',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
+    // Mark initial wipe as having previously run
+    await db.settings.put({ key: 'production_clean_v4', value: 'true' });
+
+    // Also add a legitimate product and category
+    await db.categories.put({
+      id: 'cat-legit-groceries',
+      name: 'Real Groceries',
+      slug: 'real-groceries',
+      is_active: true,
+      sync_status: 'synced',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    await db.products.put({
+      id: 'real-prod-12345',
+      sku: 'REAL-RICE-25KG',
+      barcode: '1234567890123',
+      name: 'Super Basmati Rice 25kg',
+      category_id: 'cat-legit-groceries',
+      cost_price: 85000,
+      selling_price: 110000,
+      tax_rate: 0,
+      unit: 'bag',
+      stock_quantity: 15,
+      min_stock_level: 3,
+      is_active: true,
+      sync_status: 'synced',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
+    // Before init, verify productRepository filters out dummy products even if in db
+    const activeBeforeInit = await productRepository.getActiveProducts();
+    expect(activeBeforeInit.length).toBe(1);
+    expect(activeBeforeInit[0].sku).toBe('REAL-RICE-25KG');
+
+    // Run system init
+    await initializeProductionSystem();
+
+    // Verify dummy items are purged from db while legitimate product remains
+    const prodsInDb = await db.products.toArray();
+    expect(prodsInDb.length).toBe(1);
+    expect(prodsInDb[0].sku).toBe('REAL-RICE-25KG');
+
+    const catsInDb = await db.categories.toArray();
+    expect(catsInDb.length).toBe(1);
+    expect(catsInDb[0].id).toBe('cat-legit-groceries');
+  });
 });

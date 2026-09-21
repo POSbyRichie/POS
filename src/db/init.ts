@@ -1,6 +1,13 @@
 import { db } from './index';
 import { Role, Permission, RolePermission } from '../types';
 import { logger } from '../utils/logger';
+import {
+  isDummyProduct,
+  isDummyCategoryId,
+  isDummyStore,
+  isDummyRegister,
+  isDummyUser,
+} from '../utils/productionGuard';
 
 const SYSTEM_EPOCH = '2026-01-01T00:00:00.000Z';
 
@@ -67,12 +74,50 @@ export const SYSTEM_ROLE_PERMISSIONS: RolePermission[] = [
 export async function initializeProductionSystem(): Promise<void> {
   logger.info('SystemInit', 'Verifying production system baseline configuration...');
 
-  // Check if legacy mock data exists or if production v3 reset hasn't run
-  const hasCleanV3 = await db.settings.get('production_clean_v3');
-  const legacyMockUser = await db.users.where('username').equals('cashier1').first();
-  const legacyMockCat = await db.categories.get('cat-bev');
+  // 1. Unconditionally purge any legacy dummy products that may exist
+  const allProds = await db.products.toArray();
+  const dummyProds = allProds.filter(isDummyProduct);
+  if (dummyProds.length > 0) {
+    logger.warn('SystemInit', `Purging ${dummyProds.length} legacy dummy products from local database`);
+    await db.products.bulkDelete(dummyProds.map(p => p.id));
+  }
 
-  if (!hasCleanV3 || legacyMockUser || legacyMockCat) {
+  // 2. Unconditionally purge any legacy dummy categories that may exist
+  const allCats = await db.categories.toArray();
+  const dummyCats = allCats.filter(c => isDummyCategoryId(c.id));
+  if (dummyCats.length > 0) {
+    logger.warn('SystemInit', `Purging ${dummyCats.length} legacy dummy categories from local database`);
+    await db.categories.bulkDelete(dummyCats.map(c => c.id));
+  }
+
+  // 3. Unconditionally purge any legacy dummy stores
+  const allStores = await db.stores.toArray();
+  const dummyStores = allStores.filter(isDummyStore);
+  if (dummyStores.length > 0) {
+    logger.warn('SystemInit', `Purging ${dummyStores.length} legacy dummy stores from local database`);
+    await db.stores.bulkDelete(dummyStores.map(s => s.id));
+  }
+
+  // 4. Unconditionally purge any legacy dummy registers
+  const allRegisters = await db.registers.toArray();
+  const dummyRegisters = allRegisters.filter(isDummyRegister);
+  if (dummyRegisters.length > 0) {
+    logger.warn('SystemInit', `Purging ${dummyRegisters.length} legacy dummy registers from local database`);
+    await db.registers.bulkDelete(dummyRegisters.map(r => r.id));
+  }
+
+  // 5. Unconditionally purge any legacy mock users
+  const allUsers = await db.users.toArray();
+  const dummyUsers = allUsers.filter(isDummyUser);
+  if (dummyUsers.length > 0) {
+    logger.warn('SystemInit', `Purging ${dummyUsers.length} legacy dummy users from local database`);
+    await db.users.bulkDelete(dummyUsers.map(u => u.id));
+  }
+
+  // 6. Check if production v4 reset has run
+  const hasCleanV4 = await db.settings.get('production_clean_v4');
+
+  if (!hasCleanV4) {
     logger.warn('SystemInit', 'Executing complete production data cleanup...');
     await purgeMockBusinessRecords();
     await db.users.clear();
@@ -95,7 +140,7 @@ export async function initializeProductionSystem(): Promise<void> {
         // ignore
       }
     }
-    await db.settings.put({ key: 'production_clean_v3', value: 'true' });
+    await db.settings.put({ key: 'production_clean_v4', value: 'true' });
   }
 
   // 1. Ensure System Roles

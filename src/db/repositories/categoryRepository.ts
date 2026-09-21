@@ -2,6 +2,7 @@ import { PosDatabase } from '../database';
 import { BaseRepository } from './baseRepository';
 import { Category } from '../../types';
 import { generateUUID } from '../../utils/id';
+import { isDummyCategoryId } from '../../utils/productionGuard';
 
 export interface CreateCategoryParams {
   name: string;
@@ -18,6 +19,14 @@ export class CategoryRepository extends BaseRepository<Category, string> {
     super(db.categories);
   }
 
+  override async getAll(): Promise<Category[]> {
+    const categories = await this.db.categories
+      .filter(c => !isDummyCategoryId(c.id))
+      .toArray();
+
+    return categories.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+  }
+
   /**
    * Generates a URL/code friendly slug from category name
    */
@@ -31,12 +40,14 @@ export class CategoryRepository extends BaseRepository<Category, string> {
   }
 
   async getBySlug(slug: string): Promise<Category | undefined> {
-    return this.db.categories.where('slug').equals(slug).first();
+    const cat = await this.db.categories.where('slug').equals(slug).first();
+    if (cat && isDummyCategoryId(cat.id)) return undefined;
+    return cat;
   }
 
   async getAllActive(): Promise<Category[]> {
     const categories = await this.db.categories
-      .filter(c => c.is_active !== false)
+      .filter(c => c.is_active !== false && !isDummyCategoryId(c.id))
       .toArray();
 
     return categories.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
