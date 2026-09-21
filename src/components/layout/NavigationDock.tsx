@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import {
-  Wifi,
-  WifiOff,
   LayoutGrid,
   Save,
-  RotateCcw,
   Calculator,
   Settings,
   User as UserIcon,
@@ -21,16 +18,13 @@ import {
 } from 'lucide-react';
 import { usePos } from '../../store/posStore';
 import { useRouter, RoutePath } from '../../routes/router';
-import { connectivityService } from '../../services/connectivity';
-import { syncEngine } from '../../sync';
 import { isRouteAllowed, getRoleHomeRoute } from '../../utils/rbac';
 
 interface NavigationDockProps {
-  onOpenSyncModal: () => void;
+  onOpenSyncModal?: () => void;
 }
 
-
-export const NavigationDock: React.FC<NavigationDockProps> = ({ onOpenSyncModal }) => {
+export const NavigationDock: React.FC<NavigationDockProps> = ({ onOpenSyncModal: _onOpenSyncModal }) => {
   const {
     currentUser,
     suspendedSales,
@@ -43,18 +37,6 @@ export const NavigationDock: React.FC<NavigationDockProps> = ({ onOpenSyncModal 
 
   const [isAppMenuOpen, setIsAppMenuOpen] = useState<boolean>(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
-  const [isSyncing, setIsSyncing] = useState<boolean>(false);
-
-  const isOnline = connectivityService.isOnline();
-
-  const handleManualSync = async () => {
-    setIsSyncing(true);
-    try {
-      await syncEngine.processQueue();
-    } finally {
-      setIsSyncing(false);
-    }
-  };
 
   const navItems: { path: RoutePath; label: string; icon: React.FC<{ className?: string }> }[] = [
     { path: '/dashboard', label: 'Dashboard', icon: Layers },
@@ -92,27 +74,7 @@ export const NavigationDock: React.FC<NavigationDockProps> = ({ onOpenSyncModal 
           </button>
         )}
 
-        {/* 1. Network / Online Indicator */}
-        <button
-          type="button"
-          onClick={onOpenSyncModal}
-          title={isOnline ? 'Online • Connected' : 'Offline Mode'}
-          className="relative p-2 rounded-xl transition hover:bg-slate-800/60 active:scale-95 group"
-        >
-          {isOnline ? (
-            <div className="relative">
-              <Wifi className="w-5 h-5 text-emerald-400" />
-              <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 ring-2 ring-[#181920] animate-pulse" />
-            </div>
-          ) : (
-            <div className="relative">
-              <WifiOff className="w-5 h-5 text-amber-400" />
-              <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-400 ring-2 ring-[#181920]" />
-            </div>
-          )}
-        </button>
-
-        {/* 2. 9-Dot App Grid Launcher */}
+        {/* App Grid Launcher */}
         <div className="relative">
           <button
             type="button"
@@ -184,17 +146,7 @@ export const NavigationDock: React.FC<NavigationDockProps> = ({ onOpenSyncModal 
           )}
         </button>
 
-        {/* 4. Sync / Refresh */}
-        <button
-          type="button"
-          onClick={handleManualSync}
-          title="Manual Sync / Check Cloud Status"
-          className="p-2 rounded-xl text-slate-400 hover:text-sky-400 hover:bg-slate-800/60 transition active:scale-95"
-        >
-          <RotateCcw className={`w-5 h-5 ${isSyncing ? 'animate-spin text-sky-400' : ''}`} />
-        </button>
-
-        {/* 5. Calculator */}
+        {/* 4. Calculator */}
         <button
           type="button"
           onClick={() => setCalculatorOpen(true)}
@@ -284,27 +236,7 @@ export const NavigationDock: React.FC<NavigationDockProps> = ({ onOpenSyncModal 
 
     {/* Mobile Bottom Dock (< md) */}
     <nav className="md:hidden fixed bottom-0 left-0 right-0 h-14 bg-slate-950/95 backdrop-blur-md border-t border-slate-800/90 z-40 flex items-center justify-around px-2 select-none shadow-2xl">
-      {/* 1. Network / Sync Modal */}
-      <button
-        type="button"
-        onClick={onOpenSyncModal}
-        className="p-2 rounded-xl text-slate-400 hover:text-white active:scale-95 transition"
-        title={isOnline ? 'Online' : 'Offline'}
-      >
-        {isOnline ? (
-          <div className="relative">
-            <Wifi className="w-5 h-5 text-emerald-400" />
-            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          </div>
-        ) : (
-          <div className="relative">
-            <WifiOff className="w-5 h-5 text-amber-400" />
-            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-400" />
-          </div>
-        )}
-      </button>
-
-      {/* 2. 9-Dot Launcher Popover Trigger */}
+      {/* 9-Dot Launcher Popover Trigger */}
       <button
         type="button"
         onClick={() => {

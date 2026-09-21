@@ -19,7 +19,6 @@ import { useRouter } from '../../routes/router';
 import { db } from '../../db';
 import { Product } from '../../types';
 import { formatMoney } from '../../utils/money';
-import { OfflineIndicator } from './OfflineIndicator';
 import { CashMovementModal } from '../shift/CashMovementModal';
 import { CashierDashboard } from './CashierDashboard';
 import { InventoryManager } from '../inventory/InventoryManager';
@@ -87,10 +86,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenSyncModal }) => {
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-bold text-white tracking-tight">3. POS DASHBOARD</h2>
-            <OfflineIndicator onOpenSyncModal={onOpenSyncModal} />
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Real-time terminal telemetry &bull; Register <span className="text-slate-200 font-semibold">{activeRegister?.register_name}</span>
+            Real-time terminal telemetry • Register <span className="text-slate-200 font-semibold">{activeRegister?.register_name}</span>
           </p>
         </div>
 

@@ -19,14 +19,13 @@ import { useRouter } from '../../routes/router';
 import { db } from '../../db';
 import { Sale } from '../../types';
 import { formatMoney } from '../../utils/money';
-import { OfflineIndicator } from './OfflineIndicator';
 import { CashMovementModal } from '../shift/CashMovementModal';
 
 interface CashierDashboardProps {
-  onOpenSyncModal: () => void;
+  onOpenSyncModal?: () => void;
 }
 
-export const CashierDashboard: React.FC<CashierDashboardProps> = ({ onOpenSyncModal }) => {
+export const CashierDashboard: React.FC<CashierDashboardProps> = () => {
   const { navigate } = useRouter();
   const {
     currentUser,
@@ -111,14 +110,13 @@ export const CashierDashboard: React.FC<CashierDashboardProps> = ({ onOpenSyncMo
               <h1 className="text-xl font-black text-slate-900 tracking-tight">
                 {currentUser?.full_name || 'Cashier'}
               </h1>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase bg-indigo-50 text-indigo-700 border border-indigo-200">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase bg-indigo-50 text-indigo-700 border border-indigo-200">
                 Cashier Workstation
               </span>
-              <OfflineIndicator onOpenSyncModal={onOpenSyncModal} />
             </div>
             <p className="text-xs text-slate-500 mt-1 flex items-center gap-2">
               <span>Register: <strong className="text-slate-700">{activeRegister?.register_name || 'Terminal 1'}</strong></span>
-              <span>&bull;</span>
+              <span>•</span>
               <span>Shift: <code className="text-indigo-600 font-mono font-bold">#{activeShift ? activeShift.id.slice(0, 8) : 'None'}</code></span>
             </p>
           </div>
@@ -393,7 +391,7 @@ export const CashierDashboard: React.FC<CashierDashboardProps> = ({ onOpenSyncMo
                     </span>
                   </div>
                   <span className="text-[11px] text-slate-400 font-mono mt-0.5 block">
-                    {new Date(sale.created_at).toLocaleTimeString()} &bull; ID: {sale.id.slice(0, 8)}
+                    {new Date(sale.created_at).toLocaleTimeString()} • ID: {sale.id.slice(0, 8)}
                   </span>
                 </div>
 

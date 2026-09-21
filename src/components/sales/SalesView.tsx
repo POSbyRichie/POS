@@ -21,12 +21,12 @@ import { calculateCartTotals } from '../../utils/money';
 import { useBarcodeScanner } from '../../services/barcodeService';
 import { ReprintModal } from '../pos/ReprintModal';
 
-// Dedicated currency & number formatters matching reference image (₦ Naira)
+// Dedicated currency & number formatters for Ugandan Shillings (UGX)
 const formatPosPrice = (val: number) =>
-  `₦${(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  `UGX ${(val || 0).toLocaleString('en-US')}`;
 
 const formatTotalNumber = (val: number) =>
-  (val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  (val || 0).toLocaleString('en-US');
 
 // Stock badge styling matching reference image colors:
 // > 12: Mint green (#a7f3d0)
@@ -445,7 +445,7 @@ export const SalesView: React.FC = () => {
               <div className="flex flex-col">
                 <span className="text-[11px] font-medium text-slate-400">Total</span>
                 <div className="flex items-baseline gap-1 text-slate-900">
-                  <span className="text-sm font-semibold text-slate-700">₦</span>
+                  <span className="text-xs font-bold text-slate-600">UGX</span>
                   <span className="text-2xl sm:text-3xl font-extrabold tracking-tight font-mono">
                     {formatTotalNumber(totals.grandTotal)}
                   </span>

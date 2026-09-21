@@ -129,15 +129,21 @@ class PosStore {
       }
       if (!activeUser && activeShift) {
         activeUser = (await db.users.get(activeShift.cashier_id)) || null;
+        if (!activeUser) {
+          // Orphaned shift without valid user
+          await db.shifts.delete(activeShift.id);
+        }
       }
+
+      const validShift = activeUser ? activeShift : null;
 
       this.setState({
         activeRegister: register || null,
         activeDevice: device || null,
-        activeShift: activeShift || null,
+        activeShift: validShift || null,
         currentUser: activeUser,
-        activeWorkflowStep: activeUser && activeShift ? 3 : 1, // If shift open -> Dashboard/POS, else Login
-        activeView: activeUser && activeShift ? (activeUser.role === 'cashier' ? 'pos' : 'dashboard') : 'pos',
+        activeWorkflowStep: activeUser && validShift ? 3 : 1, // If shift open -> Dashboard/POS, else Login
+        activeView: activeUser && validShift ? (activeUser.role === 'cashier' ? 'pos' : 'dashboard') : 'pos',
       });
     } catch (e) {
       console.warn('Init session error:', e);

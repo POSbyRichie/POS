@@ -62,9 +62,41 @@ export const SYSTEM_ROLE_PERMISSIONS: RolePermission[] = [
  * Production-ready initialization for fresh installations:
  * Pre-provisions system roles, permissions, and security mappings
  * with ZERO mock products, fake categories, fake customers, or demo transactions.
+ * Automatically purges any legacy demo data if present from prior visits.
  */
 export async function initializeProductionSystem(): Promise<void> {
   logger.info('SystemInit', 'Verifying production system baseline configuration...');
+
+  // Check if legacy mock data exists or if production v3 reset hasn't run
+  const hasCleanV3 = await db.settings.get('production_clean_v3');
+  const legacyMockUser = await db.users.where('username').equals('cashier1').first();
+  const legacyMockCat = await db.categories.get('cat-bev');
+
+  if (!hasCleanV3 || legacyMockUser || legacyMockCat) {
+    logger.warn('SystemInit', 'Executing complete production data cleanup...');
+    await purgeMockBusinessRecords();
+    await db.users.clear();
+    await db.stores.clear();
+    await db.registers.clear();
+    await db.devices.clear();
+    if (typeof sessionStorage !== 'undefined') {
+      try {
+        sessionStorage.clear();
+      } catch {
+        // ignore
+      }
+    }
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.removeItem('pos_active_user_id');
+        localStorage.removeItem('pos_enrolled_device_id');
+        localStorage.removeItem('pos_device_fingerprint');
+      } catch {
+        // ignore
+      }
+    }
+    await db.settings.put({ key: 'production_clean_v3', value: 'true' });
+  }
 
   // 1. Ensure System Roles
   const rolesCount = await db.roles.count();
@@ -89,7 +121,7 @@ export async function initializeProductionSystem(): Promise<void> {
 
   // 4. Mark System Initialized
   await db.settings.put({ key: 'system_initialized', value: 'true' });
-  await db.settings.put({ key: 'system_version', value: '2.4.0' });
+  await db.settings.put({ key: 'system_version', value: '3.0.0' });
 }
 
 /**
@@ -100,6 +132,7 @@ export async function purgeMockBusinessRecords(): Promise<void> {
   logger.warn('SystemCleanup', 'Purging all mock business records...');
 
   await Promise.all([
+    db.users.clear(),
     db.products.clear(),
     db.categories.clear(),
     db.inventory.clear(),

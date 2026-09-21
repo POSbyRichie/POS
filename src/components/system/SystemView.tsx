@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Activity,
-  Wifi,
-  WifiOff,
   Cloud,
   RefreshCw,
   AlertTriangle,
@@ -132,7 +130,7 @@ export const SystemView: React.FC = () => {
               : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
           }`}
         >
-          {isOnline ? <Wifi className="w-3.5 h-3.5 text-emerald-400" /> : <WifiOff className="w-3.5 h-3.5 text-amber-400" />}
+          <Activity className="w-3.5 h-3.5 text-sky-400" />
           <span>Terminal Status</span>
         </button>
 

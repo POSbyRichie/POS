@@ -4,8 +4,6 @@ import {
   KeyRound,
   AlertCircle,
   AlertTriangle,
-  Wifi,
-  WifiOff,
   Terminal,
   Eye,
   EyeOff,
@@ -350,35 +348,11 @@ export const LoginModal: React.FC = () => {
             </span>
           </div>
 
-          {/* Online / Offline Sync State */}
-          <div
-            className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border ${
-              isOnline
-                ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800/80'
-                : 'bg-amber-950/60 text-amber-400 border-amber-800/80'
-            }`}
-          >
-            {isOnline ? (
-              <>
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                <Wifi className="w-3.5 h-3.5 shrink-0" />
-                <span className="hidden md:inline">Cloud Synchronized</span>
-                <span className="md:hidden">Online</span>
-              </>
-            ) : (
-              <>
-                <WifiOff className="w-3.5 h-3.5 shrink-0" />
-                <span className="hidden md:inline">Offline Standalone Mode</span>
-                <span className="md:hidden">Offline</span>
-              </>
-            )}
-          </div>
-
           {/* Live Workstation Clock */}
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300">
             <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
             <span className="hidden lg:inline text-slate-400">{formattedDate}</span>
-            <span className="hidden lg:inline text-slate-600">&bull;</span>
+            <span className="hidden lg:inline text-slate-600">•</span>
             <span className="font-semibold text-slate-200">{formattedTime}</span>
           </div>
         </div>

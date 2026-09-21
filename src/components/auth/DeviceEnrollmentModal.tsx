@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, AlertTriangle, CheckCircle, Wifi, WifiOff } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, CheckCircle } from 'lucide-react';
 import { db } from '../../db';
 import { Register, Store } from '../../types';
 import { deviceService } from '../../services/deviceService';
@@ -157,16 +157,6 @@ export const DeviceEnrollmentModal: React.FC<DeviceEnrollmentModalProps> = ({ on
                 <p className="text-[10px] text-slate-400 font-mono">Terminal Enrollment</p>
               </div>
             </div>
-            <span
-              className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
-                isOnline
-                  ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                  : 'bg-amber-950 text-amber-400 border border-amber-800'
-              }`}
-            >
-              {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-              {isOnline ? 'Online Ready' : 'Offline Mode'}
-            </span>
           </div>
           <h3 className="text-lg sm:text-xl font-black text-white">Register Hardware Pairing</h3>
           <p className="text-xs text-slate-400 mt-1">

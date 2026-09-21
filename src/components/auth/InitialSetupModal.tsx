@@ -259,14 +259,14 @@ export const InitialSetupModal: React.FC<InitialSetupModalProps> = ({ onComplete
 
               <div>
                 <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                  Currency Symbol *
+                  Currency (Default: UGX) *
                 </label>
                 <input
                   type="text"
                   required
                   value={currencySymbol}
                   onChange={e => setCurrencySymbol(e.target.value)}
-                  placeholder="e.g. UGX, $, ₦, KSh, £, €"
+                  placeholder="UGX (Ugandan Shillings)"
                   className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition font-mono font-bold"
                 />
               </div>

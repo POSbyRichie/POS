@@ -12,17 +12,16 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { useRouter, RoutePath } from '../../routes/router';
-import { OfflineIndicator } from '../dashboard/OfflineIndicator';
 import { canInstallPwa, promptPwaInstall } from '../../services/pwa';
 import { usePos } from '../../store/posStore';
 import { useState, useEffect } from 'react';
 import { isRouteAllowed, getRoleHomeRoute } from '../../utils/rbac';
 
 interface HeaderProps {
-  onOpenSyncModal: () => void;
+  onOpenSyncModal?: () => void;
 }
 
-export function Header({ onOpenSyncModal }: HeaderProps) {
+export function Header({ onOpenSyncModal: _onOpenSyncModal }: HeaderProps) {
   const { currentPath, navigate } = useRouter();
   const { currentUser, activeRegister, setUserProfileOpen, logout } = usePos();
   const [showInstallBtn, setShowInstallBtn] = useState<boolean>(false);
@@ -193,8 +192,6 @@ export function Header({ onOpenSyncModal }: HeaderProps) {
             </button>
           </div>
         )}
-
-        <OfflineIndicator onOpenSyncModal={onOpenSyncModal} />
       </div>
     </header>
   );

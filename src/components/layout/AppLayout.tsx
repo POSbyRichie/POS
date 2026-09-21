@@ -1,7 +1,6 @@
 import { ReactNode } from 'react';
 import { Header } from './Header';
 import { NavigationDock } from './NavigationDock';
-import { SyncBanner } from './SyncBanner';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { usePos } from '../../store/posStore';
 import { useRouter } from '../../routes/router';
@@ -26,7 +25,6 @@ export function AppLayout({ children, onOpenSyncModal }: AppLayoutProps) {
         {/* Main Workspace Area */}
         <div className={`flex-1 flex flex-col min-w-0 h-screen overflow-hidden ${isCashierWorkspace ? 'bg-[#f4f5f8]' : ''}`}>
           {!isSalesRoute && <Header onOpenSyncModal={onOpenSyncModal} />}
-          {!isSalesRoute && <SyncBanner onOpenSyncModal={onOpenSyncModal} />}
           <main className={`flex-1 ${isSalesRoute ? 'p-0 overflow-hidden' : 'p-2 lg:p-3 pb-16 md:pb-3 overflow-y-auto'} flex flex-col min-w-0 ${isCashierWorkspace ? 'bg-[#f4f5f8] text-slate-800' : ''}`}>
             {children}
           </main>

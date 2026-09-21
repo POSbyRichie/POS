@@ -96,7 +96,7 @@ describe('POS Production Data Cleanup & First-Run Verification', () => {
 
     // Step 1: Fill Store & Workstation Details
     const storeNameInput = screen.getByPlaceholderText(/e\.g\. Darwin Supermarket & Retail/i);
-    const currencyInput = screen.getByPlaceholderText(/e\.g\. UGX, \$, ₦, KSh/i);
+    const currencyInput = screen.getByPlaceholderText(/UGX/i);
     const registerInput = screen.getByPlaceholderText(/e\.g\. Register 01 \(Main Counter\)/i);
 
     fireEvent.change(storeNameInput, { target: { value: 'Horizon Retail Ltd' } });
