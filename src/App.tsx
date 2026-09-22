@@ -70,24 +70,24 @@ export function App() {
 
   if (!isInitialized) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-300 p-4">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center text-slate-700 p-4">
         <div className="relative mb-4">
           <img
-            src="/logo-icon.png"
-            alt="RichiePOS Logo"
-            className="w-16 h-16 rounded-2xl object-contain shadow-2xl shadow-amber-500/20 border border-slate-800 bg-slate-900 p-1"
+            src="/richiepos-suit-logo.jpg"
+            alt="RichiePOS Suit Logo"
+            className="w-16 h-16 rounded-2xl object-contain shadow-xl shadow-amber-500/15 border border-slate-200 bg-slate-950 p-1"
           />
-          <div className="absolute -inset-1 rounded-2xl border-2 border-amber-500/30 border-t-amber-400 animate-spin" />
+          <div className="absolute -inset-1 rounded-2xl border-2 border-amber-500/30 border-t-amber-500 animate-spin" />
         </div>
-        <h2 className="text-base font-black text-white flex items-center gap-1">
+        <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-1">
           <span>Richie</span>
-          <span className="text-amber-400">POS</span>
-          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-950 text-amber-300 border border-amber-800 font-bold ml-1">
+          <span className="text-amber-600">POS</span>
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200 font-bold ml-1">
             SUIT
           </span>
         </h2>
-        <p className="text-xs text-slate-400 mt-1">Smart POS &bull; Growing Businesses</p>
-        <p className="text-[11px] text-slate-500 font-mono mt-3">Verifying local-first database...</p>
+        <p className="text-xs text-slate-500 mt-1 font-medium">Smart POS &bull; Growing Businesses</p>
+        <p className="text-[11px] text-slate-400 font-mono mt-3">Verifying local-first database...</p>
       </div>
     );
   }
